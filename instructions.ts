@@ -36,6 +36,10 @@ const DB_SERVER_PROMPT_CHOICES = [
     name: 'mssql' as const,
     message: 'Microsoft SQL Server',
   },
+  {
+    name: 'sybase',
+    message: 'Sybase Acner',
+  },
 ]
 
 /**
@@ -72,6 +76,13 @@ const DB_SERVER_ENV_VALUES = {
     MSSQL_PASSWORD: '',
     MSSQL_DB_NAME: 'lucid',
   },
+  sybase: {
+    SYBASE_SERVER: 'localhost',
+    SYBASE_PORT: 2629,
+    SYBASE_USER: 'acner',
+    SYBASE_PASSWORD: '',
+    SYBASE_SERVERNAME: 'lucid',
+  },
 }
 
 /**
@@ -83,6 +94,7 @@ const DB_DRIVER_PACKAGES = {
   pg: 'pg',
   oracle: 'oracledb',
   mssql: 'mssql',
+  sybase: 'sybase',
 }
 
 /**
@@ -137,6 +149,7 @@ export default async function instructions(
       psql: drivers.includes('pg'),
       oracle: drivers.includes('oracle'),
       mssql: drivers.includes('mssql'),
+      sybase: drivers.includes('sybase'),
     })
     .commit()
   const configDir = app.directoriesMap.get('config') || 'config'

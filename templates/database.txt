@@ -171,7 +171,34 @@ const databaseConfig: DatabaseConfig = {
       debug: false,
     }
     {{/mssql}}
+
+     {{#sybase}}
+    /*
+    |--------------------------------------------------------------------------
+    | Sybase config
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Sybase database. Make sure to install the driver
+    | from npm when using this connection
+    |
+    | npm i sybase
+    |
+    */
+		oracle: {
+			client: 'sybase',
+      connection: {
+				user: Env.get('SYBASE_USER'),
+				port: Env.get('SYBASE_PORT'),
+				server: Env.get('SYBASE_SERVER'),
+				password: Env.get('SYBASE_PASSWORD', ''),
+				database: Env.get('SYBASE_SERVERNAME'),
+      },
+      healthCheck: false,
+			debug: false,
+		}
+		{{/sybase}}
   }
+
 }
 
 export default databaseConfig

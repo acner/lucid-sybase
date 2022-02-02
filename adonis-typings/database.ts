@@ -47,7 +47,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
    * Dialect specfic methods
    */
   export interface DialectContract {
-    readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3'
+    readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3' | 'sybase';
     readonly version?: string
     readonly supportsAdvisoryLocks: boolean
     readonly dateTimeFormat: string
@@ -497,6 +497,29 @@ declare module '@ioc:Adonis/Lucid/Database' {
     }
   }
 
+  type SybaseConnectionNode = {
+    servername: string;
+    connectionTimeout?: number;
+    requestTimeout?: number;
+    parseJSON?: boolean;
+
+};
+export type SybaseConfig = SharedConfigNode & {
+    client: 'sybase';
+    version?: string;
+    connection?: SharedConnectionNode & SybaseConnectionNode;
+    replicas?: {
+        write: {
+            connection: SybaseConfig['connection'];
+            pool?: SybaseConfig['pool'];
+        };
+        read: {
+            connection: SybaseConfig['connection'][];
+            pool?: SybaseConfig['pool'];
+        };
+    };
+};
+
   /**
    * Connection config must be the config from one of the
    * available dialects
@@ -508,6 +531,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     | OracleConfig
     | RedshiftConfig
     | MssqlConfig
+    | SybaseConfig
 
   /**
    * Shape of config inside the database config file
@@ -610,6 +634,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
       | 'postgres'
       | 'redshift'
       | 'sqlite3'
+      | 'sybase'
 
     /**
      * Property to find if explicit read/write is enabled

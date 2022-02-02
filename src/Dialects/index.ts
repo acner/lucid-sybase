@@ -13,6 +13,8 @@ import { MssqlDialect } from './Mssql'
 import { SqliteDialect } from './Sqlite'
 import { OracleDialect } from './Oracle'
 import { RedshiftDialect } from './Redshift'
+import { SybaseDialect } from './Sybase';
+
 
 export const dialects = {
   mssql: MssqlDialect,
@@ -22,4 +24,6 @@ export const dialects = {
   postgres: PgDialect,
   redshift: RedshiftDialect,
   sqlite3: SqliteDialect,
+  sybase: SybaseDialect,
+
 }

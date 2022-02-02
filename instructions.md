@@ -50,3 +50,14 @@ ORACLE_USER: Env.schema.string(),
 ORACLE_PASSWORD: Env.schema.string.optional(),
 ORACLE_DB_NAME: Env.schema.string(),
 ```
+
+
+## Variables for the Sybase driver
+
+```ts
+SYBASE_HOST: Env.schema.string({ format: 'host' }),
+SYBASE_PORT: Env.schema.number(),
+SYBASE_USER: Env.schema.string(),
+SYBASE_PASSWORD: Env.schema.string.optional(),
+SYBASE_SERVERNAME: Env.schema.string(),
+```
