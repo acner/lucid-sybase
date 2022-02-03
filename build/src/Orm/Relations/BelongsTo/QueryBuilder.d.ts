@@ -1,5 +1,5 @@
-import { Knex } from 'knex';
-import { LucidRow } from '@ioc:Adonis/Lucid/Orm';
+import knex from 'knex';
+import { LucidRow } from '@ioc:Adonis/Lucid/Model';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
 import { BelongsTo } from './index';
 import { BaseQueryBuilder } from '../Base/QueryBuilder';
@@ -11,7 +11,7 @@ export declare class BelongsToQueryBuilder extends BaseQueryBuilder {
     private parent;
     private relation;
     protected appliedConstraints: boolean;
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, parent: LucidRow | LucidRow[], relation: BelongsTo);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, parent: LucidRow | LucidRow[], relation: BelongsTo);
     /**
      * Raises exception that FK value is null
      */

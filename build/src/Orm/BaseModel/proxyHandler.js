@@ -21,11 +21,7 @@ exports.proxyHandler = {
          * doesn't have a getter
          */
         if (column && !column.hasGetter) {
-            const attributeValue = target.$getAttribute(key);
-            if (attributeValue === undefined) {
-                return Reflect.get(target, key, receiver);
-            }
-            return attributeValue;
+            return target.$getAttribute(key);
         }
         /**
          * Fetch the relation when property is defined as a relationship
@@ -45,7 +41,6 @@ exports.proxyHandler = {
          */
         if (column && !column.hasSetter) {
             target.$setAttribute(key, value);
-            Reflect.set(target, key, value, receiver);
             return true;
         }
         /**
@@ -57,16 +52,5 @@ exports.proxyHandler = {
             return true;
         }
         return Reflect.set(target, key, value, receiver);
-    },
-    defineProperty(target, key, value) {
-        const Model = target.constructor;
-        const column = Model.$getColumn(key);
-        /**
-         * Set the attribute along side defining the property
-         */
-        if (column && !column.hasSetter && value.value !== undefined) {
-            target.$setAttribute(key, value.value);
-        }
-        return Reflect.defineProperty(target, key, value);
     },
 };

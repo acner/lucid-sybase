@@ -35,11 +35,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const slash_1 = __importDefault(require("slash"));
 const path_1 = require("path");
 const standalone_1 = require("@adonisjs/core/build/standalone");
 class DbSeed extends standalone_1.BaseCommand {
@@ -48,41 +44,12 @@ class DbSeed extends standalone_1.BaseCommand {
         /**
          * Track if one or more seeders have failed
          */
-        Object.defineProperty(this, "hasError", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        /**
-         * Choose a custom pre-defined connection. Otherwise, we use the
-         * default connection
-         */
-        Object.defineProperty(this, "connection", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Interactive mode allows selecting seeder files
-         */
-        Object.defineProperty(this, "interactive", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.hasError = false;
         /**
          * Define a custom set of seeder files. Interactive and files together ignores
          * the interactive mode.
          */
-        Object.defineProperty(this, "files", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
+        this.files = [];
     }
     /**
      * Print log message to the console
@@ -145,7 +112,7 @@ class DbSeed extends standalone_1.BaseCommand {
         let selectedFileNames = files.map(({ name }) => name);
         if (this.files.length) {
             selectedFileNames = this.files.map((file) => {
-                const fileExt = (0, path_1.extname)(file);
+                const fileExt = path_1.extname(file);
                 return (fileExt ? file.replace(fileExt, '') : file).replace(/^\.\/|^\.\\\\/, '');
             });
             if (this.interactive) {
@@ -161,9 +128,7 @@ class DbSeed extends standalone_1.BaseCommand {
          * Execute selected seeders
          */
         for (let fileName of selectedFileNames) {
-            const sourceFile = files.find(({ name }) => {
-                return (0, slash_1.default)(fileName) === (0, slash_1.default)(name);
-            });
+            const sourceFile = files.find(({ name }) => fileName === name);
             if (!sourceFile) {
                 this.printLogMessage({
                     file: {
@@ -188,30 +153,15 @@ class DbSeed extends standalone_1.BaseCommand {
         await db.manager.closeAll(true);
     }
 }
-Object.defineProperty(DbSeed, "commandName", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'db:seed'
-});
-Object.defineProperty(DbSeed, "description", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'Execute database seeder files'
-});
+DbSeed.commandName = 'db:seed';
+DbSeed.description = 'Execute database seeder files';
 /**
  * This command loads the application, since we need the runtime
  * to find the migration directories for a given connection
  */
-Object.defineProperty(DbSeed, "settings", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {
-        loadApp: true,
-    }
-});
+DbSeed.settings = {
+    loadApp: true,
+};
 __decorate([
     standalone_1.flags.string({ description: 'Define a custom database connection for the seeders', alias: 'c' }),
     __metadata("design:type", String)

@@ -2,7 +2,7 @@
 import { DialectContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database';
 export declare class SybaseDialect implements DialectContract {
     private client;
-    readonly name = "sybase";
+    readonly name = "mssql";
     readonly supportsAdvisoryLocks = false;
     /**
      * Reference to the database version. Knex.js fetches the version after
@@ -20,7 +20,7 @@ export declare class SybaseDialect implements DialectContract {
      */
     getAllTables(): Promise<any[]>;
     /**
-     * Truncate sybase table. Disabling foreign key constriants alone is
+     * Truncate mssql table. Disabling foreign key constriants alone is
      * not enough for SQL server.
      *
      * One has to drop all FK constraints and then re-create them, and

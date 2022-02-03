@@ -2,10 +2,6 @@ The package has been configured successfully. The database configuration stored 
 
 **Open the `env.ts` file and paste the following code inside the `Env.rules` object.**
 
-```ts
-DB_CONNECTION: Env.schema.string(),
-```
-
 ## Variables for the MYSQL driver
 
 ```ts
@@ -50,7 +46,6 @@ ORACLE_USER: Env.schema.string(),
 ORACLE_PASSWORD: Env.schema.string.optional(),
 ORACLE_DB_NAME: Env.schema.string(),
 ```
-
 
 ## Variables for the Sybase driver
 

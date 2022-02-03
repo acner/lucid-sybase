@@ -16,12 +16,7 @@ const Base_1 = require("./Base");
 class ManyToMany extends Base_1.BaseRelation {
     constructor(relation, factory) {
         super(factory);
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
+        this.relation = relation;
         this.relation.boot();
     }
     /**
@@ -30,6 +25,15 @@ class ManyToMany extends Base_1.BaseRelation {
     async make(parent, callback, count) {
         const factory = this.compile(callback);
         const instances = await factory.makeStubbedMany(count || 1);
+        const [pivotKey, pivotValue] = this.relation.getPivotPair(parent);
+        instances.forEach((related) => {
+            const [pivotRelatedKey, pivotRelatedValue] = this.relation.getPivotRelatedPair(related);
+            /**
+             * Update model $extra properties
+             */
+            related.$extras[pivotKey] = pivotValue;
+            related.$extras[pivotRelatedKey] = pivotRelatedValue;
+        });
         parent.$setRelated(this.relation.relationName, instances);
     }
     /**
@@ -39,9 +43,24 @@ class ManyToMany extends Base_1.BaseRelation {
         const factory = this.compile(callback);
         const instances = await factory.createMany(count || 1);
         /**
+         * Loop over instances to build pivot attributes
+         */
+        const pivotAttributes = {};
+        const [pivotKey, pivotValue] = this.relation.getPivotPair(parent);
+        instances.forEach((related) => {
+            const [pivotRelatedKey, pivotRelatedValue] = this.relation.getPivotRelatedPair(related);
+            /**
+             * Update model $extra properties
+             */
+            related.$extras[pivotKey] = pivotValue;
+            related.$extras[pivotRelatedKey] = pivotRelatedValue;
+            // custom pivot attributes will come here
+            pivotAttributes[pivotRelatedValue] = {};
+        });
+        /**
          * Make pivot insert query
          */
-        await this.relation.client(parent, this.ctx.$trx).saveMany(instances);
+        await this.relation.client(parent, this.ctx.$trx).attach(pivotAttributes);
         /**
          * Setup in-memory relationship
          */

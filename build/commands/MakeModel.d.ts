@@ -15,11 +15,9 @@ export default class MakeModel extends BaseCommand {
      */
     controller: boolean;
     /**
-     * This command loads the application
+     * Executes a given command
      */
-    static settings: {
-        loadApp: boolean;
-    };
+    private execCommand;
     /**
      * Execute command
      */

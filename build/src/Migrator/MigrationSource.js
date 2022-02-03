@@ -16,28 +16,15 @@ const utils_1 = require("../utils");
  */
 class MigrationSource {
     constructor(config, app) {
-        Object.defineProperty(this, "config", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: config
-        });
-        Object.defineProperty(this, "app", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: app
-        });
+        this.config = config;
+        this.app = app;
     }
     /**
      * Returns an array of files inside a given directory. Relative
      * paths are resolved from the project root
      */
     async getDirectoryFiles(directoryPath) {
-        let { files } = await (0, utils_1.sourceFiles)(this.app.appRoot, directoryPath);
-        if (this.config.migrations?.naturalSort) {
-            files = files.sort((a, b) => a.filename.localeCompare(b.filename, undefined, { numeric: true, sensitivity: 'base' }));
-        }
+        const { files } = await utils_1.sourceFiles(this.app.appRoot, directoryPath);
         return files;
     }
     /**

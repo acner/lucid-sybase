@@ -17,24 +17,9 @@ const SubQueryBuilder_1 = require("./SubQueryBuilder");
  */
 class HasManyThroughClient {
     constructor(relation, parent, client) {
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
-        Object.defineProperty(this, "parent", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: parent
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
+        this.relation = relation;
+        this.parent = parent;
+        this.client = client;
     }
     /**
      * Generate a related query builder

@@ -16,36 +16,11 @@ const SeedersSource_1 = require("./SeedersSource");
  */
 class SeedsRunner {
     constructor(db, app, connectionName) {
-        Object.defineProperty(this, "db", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: db
-        });
-        Object.defineProperty(this, "app", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: app
-        });
-        Object.defineProperty(this, "connectionName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: connectionName
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.db.connection(this.connectionName || this.db.primaryConnectionName)
-        });
-        Object.defineProperty(this, "config", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.db.getRawConnection(this.client.connectionName).config
-        });
+        this.db = db;
+        this.app = app;
+        this.connectionName = connectionName;
+        this.client = this.db.connection(this.connectionName || this.db.primaryConnectionName);
+        this.config = this.db.getRawConnection(this.client.connectionName).config;
     }
     /**
      * Returns the seeder source by ensuring value is a class constructor

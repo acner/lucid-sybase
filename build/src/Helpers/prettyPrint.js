@@ -14,7 +14,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.prettyPrint = void 0;
 const util_1 = require("util");
 const igniculus_1 = __importDefault(require("igniculus"));
-const illuminate = (0, igniculus_1.default)({
+const illuminate = igniculus_1.default({
     comments: { fg: 'gray' },
     constants: { fg: 'red' },
     delimitedIdentifiers: { fg: 'yellow' },
@@ -61,7 +61,7 @@ function prettyPrint(queryLog) {
      */
     output += colorizeQuery(queryLog.sql);
     if (!queryLog.ddl) {
-        output += color.gray(` ${(0, util_1.inspect)(queryLog.bindings)}`);
+        output += color.gray(` ${util_1.inspect(queryLog.bindings)}`);
     }
     /**
      * Print it to the console

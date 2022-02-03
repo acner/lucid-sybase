@@ -23,27 +23,11 @@ class HasManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
                 subQuery.isChildQuery = true;
                 subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery;
                 userFn(subQuery);
-                subQuery.applyWhere();
             };
         });
-        Object.defineProperty(this, "parent", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: parent
-        });
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
-        Object.defineProperty(this, "appliedConstraints", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.parent = parent;
+        this.relation = relation;
+        this.appliedConstraints = false;
     }
     /**
      * Profiler data for HasMany relationship
@@ -69,8 +53,6 @@ class HasManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
         this.applyQueryFlags(clonedQuery);
         clonedQuery.appliedConstraints = this.appliedConstraints;
         clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery;
-        clonedQuery.debug(this.debugQueries);
-        clonedQuery.reporterData(this.customReporterData);
         return clonedQuery;
     }
     /**
@@ -87,16 +69,16 @@ class HasManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
          * Eager query contraints
          */
         if (Array.isArray(this.parent)) {
-            this.wrapExisting().whereIn(this.relation.foreignKey, (0, utils_1.unique)(this.parent.map((model) => {
-                return (0, utils_1.getValue)(model, this.relation.localKey, this.relation, queryAction);
+            this.whereIn(this.relation.foreignKey, utils_1.unique(this.parent.map((model) => {
+                return utils_1.getValue(model, this.relation.localKey, this.relation, queryAction);
             })));
             return;
         }
         /**
          * Query constraints
          */
-        const value = (0, utils_1.getValue)(this.parent, this.relation.localKey, this.relation, queryAction);
-        this.wrapExisting().where(this.relation.foreignKey, value);
+        const value = utils_1.getValue(this.parent, this.relation.localKey, this.relation, queryAction);
+        this.where(this.relation.foreignKey, value);
     }
     /**
      * Same as standard model query builder paginate method. But ensures that
@@ -106,7 +88,6 @@ class HasManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
         if (this.isRelatedPreloadQuery) {
             throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`);
         }
-        this.applyConstraints();
         return super.paginate(page, perPage);
     }
     /**
@@ -127,12 +108,11 @@ class HasManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
             this.select('*');
         }
         this.select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`)).as('adonis_temp');
-        const groupQuery = this.relation.relatedModel().query();
-        groupQuery.usePreloader(this.preloader);
-        groupQuery.sideload(this.sideloaded);
-        groupQuery.debug(this.debugQueries);
-        this.customReporterData && groupQuery.reporterData(this.customReporterData);
-        return groupQuery.from(this).where(rowName, '<=', this.groupConstraints.limit);
+        return this.relation
+            .relatedModel()
+            .query()
+            .from(this)
+            .where(rowName, '<=', this.groupConstraints.limit);
     }
 }
 exports.HasManyQueryBuilder = HasManyQueryBuilder;

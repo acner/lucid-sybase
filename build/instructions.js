@@ -35,9 +35,9 @@ const DB_SERVER_PROMPT_CHOICES = [
         message: 'Microsoft SQL Server',
     },
     {
-        name: 'sybase',
-        message: 'Sybase Acner',
-    },
+      name: 'sybase',
+      message: 'Sybase Acner',
+  },
 ];
 /**
  * Environment variables used by different database
@@ -74,12 +74,12 @@ const DB_SERVER_ENV_VALUES = {
         MSSQL_DB_NAME: 'lucid',
     },
     sybase: {
-        SYBASE_SERVER: 'localhost',
-        SYBASE_PORT: 2629,
-        SYBASE_USER: 'acner',
-        SYBASE_PASSWORD: '',
-        SYBASE_SERVERNAME: 'lucid',
-    },
+      SYBASE_SERVER: 'localhost',
+      SYBASE_PORT: 2629,
+      SYBASE_USER: 'acner',
+      SYBASE_PASSWORD: '',
+      SYBASE_SERVERNAME: 'lucid',
+  },
 };
 /**
  * Packages required by different drivers
@@ -109,7 +109,7 @@ function getDbDrivers(sink) {
  * directory
  */
 function getStub(...relativePaths) {
-    return (0, path_1.join)(__dirname, 'templates', ...relativePaths);
+    return path_1.join(__dirname, 'templates', ...relativePaths);
 }
 /**
  * Instructions to be executed when setting up the package.
@@ -160,8 +160,8 @@ async function instructions(projectRoot, app, sink) {
     /**
      * Create tmp dir when sqlite is selected
      */
-    if (drivers.includes('sqlite') && !(0, fs_1.existsSync)(app.tmpPath())) {
-        (0, fs_1.mkdirSync)(app.tmpPath());
+    if (drivers.includes('sqlite') && !fs_1.existsSync(app.tmpPath())) {
+        fs_1.mkdirSync(app.tmpPath());
         const tmpDir = app.directoriesMap.get('tmp') || 'tmp';
         sink.logger.action('create').succeeded(`./${tmpDir}`);
     }

@@ -13,44 +13,19 @@ exports.MssqlDialect = void 0;
 const Raw_1 = require("../Database/StaticBuilder/Raw");
 class MssqlDialect {
     constructor(client) {
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
-        Object.defineProperty(this, "name", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 'mssql'
-        });
-        Object.defineProperty(this, "supportsAdvisoryLocks", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.client = client;
+        this.name = 'mssql';
+        this.supportsAdvisoryLocks = false;
         /**
          * Reference to the database version. Knex.js fetches the version after
          * the first database query, so it will be set to undefined initially
          */
-        Object.defineProperty(this, "version", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.client.getReadClient()['context']['client'].version
-        });
+        this.version = this.client.getReadClient()['context']['client'].version;
         /**
          * The default format for datetime column. The date formats is
          * valid for luxon date parsing library
          */
-        Object.defineProperty(this, "dateTimeFormat", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: "yyyy-MM-dd'T'HH:mm:ss.SSSZZ"
-        });
+        this.dateTimeFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZZ";
     }
     /**
      * Returns an array of table names

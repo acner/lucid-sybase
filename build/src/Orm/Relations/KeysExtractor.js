@@ -16,24 +16,9 @@ const utils_1 = require("@poppinss/utils");
  */
 class KeysExtractor {
     constructor(model, relationName, keys) {
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: model
-        });
-        Object.defineProperty(this, "relationName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relationName
-        });
-        Object.defineProperty(this, "keys", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: keys
-        });
+        this.model = model;
+        this.relationName = relationName;
+        this.keys = keys;
     }
     /**
      * Extract the defined keys from the models

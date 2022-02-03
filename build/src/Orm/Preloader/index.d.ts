@@ -1,4 +1,5 @@
-import { LucidRow, LucidModel, ModelObject, PreloaderContract } from '@ioc:Adonis/Lucid/Orm';
+import { ModelObject, LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model';
+import { PreloaderContract } from '@ioc:Adonis/Lucid/Relations';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
 /**
  * Exposes the API to define and preload relationships in reference to
@@ -25,10 +26,6 @@ export declare class Preloader implements PreloaderContract<LucidRow> {
     private processRelationForMany;
     /**
      * Define a relationship to preload
-     */
-    load(name: any, callback?: any): this;
-    /**
-     * Alias for "this.load"
      */
     preload(name: any, callback?: any): this;
     /**

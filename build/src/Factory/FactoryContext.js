@@ -15,24 +15,9 @@ exports.FactoryContext = void 0;
 const faker_1 = __importDefault(require("faker"));
 class FactoryContext {
     constructor(isStubbed, $trx) {
-        Object.defineProperty(this, "isStubbed", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: isStubbed
-        });
-        Object.defineProperty(this, "$trx", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: $trx
-        });
-        Object.defineProperty(this, "faker", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: faker_1.default
-        });
+        this.isStubbed = isStubbed;
+        this.$trx = $trx;
+        this.faker = faker_1.default;
     }
 }
 exports.FactoryContext = FactoryContext;

@@ -21,84 +21,44 @@ const ManyToMany_1 = require("./Relations/ManyToMany");
  */
 class FactoryModel {
     constructor(model, define, manager) {
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: model
-        });
-        Object.defineProperty(this, "define", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: define
-        });
-        Object.defineProperty(this, "manager", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: manager
-        });
+        this.model = model;
+        this.define = define;
+        this.manager = manager;
         /**
          * Method to instantiate a new model instance. This method can be
          * overridden using the `newUp` public method.
          */
-        Object.defineProperty(this, "newUpModelInstance", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: function (attributes) {
-                const ModelConstructor = this.model;
-                /**
-                 * Handling case, where someone returns model instance directly
-                 */
-                if (attributes instanceof ModelConstructor) {
-                    return attributes;
-                }
-                const modelInstance = new ModelConstructor();
-                modelInstance.merge(attributes);
-                return modelInstance;
-            }.bind(this)
-        });
+        this.newUpModelInstance = function (attributes) {
+            const Model = this.model;
+            /**
+             * Handling case, where someone returns model instance directly
+             */
+            if (attributes instanceof Model) {
+                return attributes;
+            }
+            const modelInstance = new Model();
+            modelInstance.merge(attributes);
+            return modelInstance;
+        }.bind(this);
         /**
          * Method to merge runtime attributes with the model instance. This method
          * can be overridden using the `merge` method.
          */
-        Object.defineProperty(this, "mergeAttributes", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: function (model, attributes) {
-                model.merge(attributes);
-            }.bind(this)
-        });
+        this.mergeAttributes = function (model, attributes) {
+            model.merge(attributes);
+        }.bind(this);
         /**
          * A collection of factory states
          */
-        Object.defineProperty(this, "states", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.states = {};
         /**
          * A collection of factory relations
          */
-        Object.defineProperty(this, "relations", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.relations = {};
         /**
          * A set of registered hooks
          */
-        Object.defineProperty(this, "hooks", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new hooks_1.Hooks()
-        });
+        this.hooks = new hooks_1.Hooks();
     }
     /**
      * Register a before event hook

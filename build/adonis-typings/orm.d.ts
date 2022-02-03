@@ -1,47 +1,41 @@
 declare module '@ioc:Adonis/Lucid/Orm' {
-    import { SimplePaginatorMetaKeys } from '@ioc:Adonis/Lucid/Database';
-    const SnakeCaseNamingStrategy: {
-        new (): NamingStrategyContract;
-    };
-    const scope: ScopeFn;
-    const BaseModel: LucidModel;
+    import { ScopeFn, LucidModel, HooksDecorator, ColumnDecorator, ComputedDecorator, DateColumnDecorator, DateTimeColumnDecorator } from '@ioc:Adonis/Lucid/Model';
+    import { HasOneDecorator, HasManyDecorator, BelongsToDecorator, ManyToManyDecorator, HasManyThroughDecorator } from '@ioc:Adonis/Lucid/Relations';
+    export { HasOne, HasMany, BelongsTo, ManyToMany, HasManyThrough, } from '@ioc:Adonis/Lucid/Relations';
+    export { OrmConfig, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model';
+    export const scope: ScopeFn;
+    export const BaseModel: LucidModel;
     /**
      * Relationships
      */
-    const hasOne: HasOneDecorator;
-    const belongsTo: BelongsToDecorator;
-    const hasMany: HasManyDecorator;
-    const manyToMany: ManyToManyDecorator;
-    const hasManyThrough: HasManyThroughDecorator;
+    export const hasOne: HasOneDecorator;
+    export const belongsTo: BelongsToDecorator;
+    export const hasMany: HasManyDecorator;
+    export const manyToMany: ManyToManyDecorator;
+    export const hasManyThrough: HasManyThroughDecorator;
     /**
      * Hooks
      */
-    const beforeSave: HooksDecorator;
-    const afterSave: HooksDecorator;
-    const beforeCreate: HooksDecorator;
-    const afterCreate: HooksDecorator;
-    const beforeUpdate: HooksDecorator;
-    const afterUpdate: HooksDecorator;
-    const beforeDelete: HooksDecorator;
-    const afterDelete: HooksDecorator;
-    const beforeFind: HooksDecorator;
-    const afterFind: HooksDecorator;
-    const beforeFetch: HooksDecorator;
-    const afterFetch: HooksDecorator;
-    const beforePaginate: HooksDecorator;
-    const afterPaginate: HooksDecorator;
-    const ModelPaginator: {
-        namingStrategy: {
-            paginationMetaKeys(): SimplePaginatorMetaKeys;
-        };
-        new <Row extends LucidRow>(total: number, perPage: number, currentPage: number, ...rows: Row[]): ModelPaginatorContract<Row>;
-    };
+    export const beforeSave: HooksDecorator;
+    export const afterSave: HooksDecorator;
+    export const beforeCreate: HooksDecorator;
+    export const afterCreate: HooksDecorator;
+    export const beforeUpdate: HooksDecorator;
+    export const afterUpdate: HooksDecorator;
+    export const beforeDelete: HooksDecorator;
+    export const afterDelete: HooksDecorator;
+    export const beforeFind: HooksDecorator;
+    export const afterFind: HooksDecorator;
+    export const beforeFetch: HooksDecorator;
+    export const afterFetch: HooksDecorator;
+    export const beforePaginate: HooksDecorator;
+    export const afterPaginate: HooksDecorator;
     /**
      * Columns and computed
      */
-    const column: ColumnDecorator & {
+    export const column: ColumnDecorator & {
         date: DateColumnDecorator;
         dateTime: DateTimeColumnDecorator;
     };
-    const computed: ComputedDecorator;
+    export const computed: ComputedDecorator;
 }

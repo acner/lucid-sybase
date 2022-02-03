@@ -16,34 +16,13 @@ const utils_1 = require("@poppinss/utils");
  */
 class Preloader {
     constructor(model) {
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: model
-        });
-        Object.defineProperty(this, "preloads", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.model = model;
+        this.preloads = {};
         /**
          * When invoked via query builder. The preloader will get the sideloaded
          * object, that should be transferred to relationship model instances.
          */
-        Object.defineProperty(this, "sideloaded", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
-        Object.defineProperty(this, "debugQueries", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.sideloaded = {};
     }
     /**
      * Processes a relationship for a single parent
@@ -65,7 +44,7 @@ class Preloader {
          * hasOne and belongsTo will always return an array of a single row (if done right)
          */
         if (relation.type === 'hasOne' || relation.type === 'belongsTo') {
-            relation.setRelated(parent, result[0] || null);
+            relation.setRelated(parent, result[0]);
             return;
         }
         /**
@@ -98,7 +77,7 @@ class Preloader {
     /**
      * Define a relationship to preload
      */
-    load(name, callback) {
+    preload(name, callback) {
         const relation = this.model.$getRelation(name);
         if (!relation) {
             throw new utils_1.Exception(`"${name}" is not defined as a relationship on "${this.model.name}" model`, 500, 'E_UNDEFINED_RELATIONSHIP');
@@ -109,12 +88,6 @@ class Preloader {
             callback: callback,
         };
         return this;
-    }
-    /**
-     * Alias for "this.load"
-     */
-    preload(name, callback) {
-        return this.load(name, callback);
     }
     /**
      * Toggle query debugging

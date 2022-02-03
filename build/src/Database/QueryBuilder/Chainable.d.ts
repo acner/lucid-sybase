@@ -1,7 +1,7 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
-import { Knex } from 'knex';
+import knex from 'knex';
 import { Macroable } from 'macroable';
-import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/Database';
+import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
 /**
  * The chainable query builder to consturct SQL queries for selecting, updating and
  * deleting records.
@@ -10,29 +10,12 @@ import { ChainableContract, DBQueryCallback } from '@ioc:Adonis/Lucid/Database';
  * different API.
  */
 export declare abstract class Chainable extends Macroable implements ChainableContract {
-    knexQuery: Knex.QueryBuilder;
+    knexQuery: knex.QueryBuilder;
     private queryCallback;
     keysResolver?: ((columnName: string) => string) | undefined;
     hasAggregates: boolean;
     hasGroupBy: boolean;
     hasUnion: boolean;
-    /**
-     * Collection where clauses in a 2nd array. Calling `wrapExisting`
-     * adds a new stack item
-     */
-    private whereStack;
-    /**
-     * Returns the recent most array from the where stack
-     */
-    private getRecentStackItem;
-    /**
-     * Returns the wrapping method for a given where method
-     */
-    private getWrappingMethod;
-    /**
-     * Applies the where clauses
-     */
-    protected applyWhere(): void;
     /**
      * An array of selected columns
      */
@@ -42,7 +25,7 @@ export declare abstract class Chainable extends Macroable implements ChainableCo
      * subquery
      */
     subQueryAlias?: string;
-    constructor(knexQuery: Knex.QueryBuilder, queryCallback: DBQueryCallback, keysResolver?: ((columnName: string) => string) | undefined);
+    constructor(knexQuery: knex.QueryBuilder, queryCallback: DBQueryCallback, keysResolver?: ((columnName: string) => string) | undefined);
     /**
      * Raises exception when only one argument is passed to a where
      * clause and it is a string. It means the value is undefined
@@ -58,10 +41,6 @@ export declare abstract class Chainable extends Macroable implements ChainableCo
      */
     private normalizeAggregateColumns;
     /**
-     * Resolves the column name considering raw queries as well.
-     */
-    private resolveColumn;
-    /**
      * Resolves column names
      */
     protected resolveKey(columns: any, checkForObject?: boolean, returnValue?: any): any;
@@ -69,7 +48,7 @@ export declare abstract class Chainable extends Macroable implements ChainableCo
      * Apply existing query flags to a new query builder. This is
      * done during clone operation
      */
-    protected applyQueryFlags(query: Chainable): void;
+    protected applyQueryFlags(query: ChainableContract): void;
     /**
      * Transforms the value to something that knex can internally understand and
      * handle. It includes.
@@ -100,10 +79,6 @@ export declare abstract class Chainable extends Macroable implements ChainableCo
      * use the last selected table
      */
     from(table: any): this;
-    /**
-     * Wrap existing where clauses to its own group
-     */
-    wrapExisting(): this;
     /**
      * Add a `where` clause
      */
@@ -552,10 +527,6 @@ export declare abstract class Chainable extends Macroable implements ChainableCo
      * Make use of `sum` aggregate function
      */
     sum(columns: any, alias?: any): this;
-    /**
-     * Make use of distinct `sum` aggregate function
-     */
-    sumDistinct(columns: any, alias?: any): this;
     /**
      * A shorthand for applying offset and limit based upon
      * the current page

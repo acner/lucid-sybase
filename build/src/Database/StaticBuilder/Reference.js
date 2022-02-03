@@ -13,31 +13,8 @@ exports.ReferenceBuilder = void 0;
  * Reference builder to create SQL reference values
  */
 class ReferenceBuilder {
-    constructor(ref, client) {
-        Object.defineProperty(this, "ref", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: ref
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
-        Object.defineProperty(this, "schema", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "alias", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+    constructor(ref) {
+        this.ref = ref;
     }
     /**
      * Define schema
@@ -57,7 +34,7 @@ class ReferenceBuilder {
      * Converts reference to knex
      */
     toKnex(client) {
-        const ref = (client || this.client).ref(this.ref);
+        const ref = client.ref(this.ref);
         this.schema && ref.withSchema(this.schema);
         this.alias && ref.as(this.alias);
         return ref;

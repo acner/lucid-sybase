@@ -1,4 +1,4 @@
-import { LucidModel, QueryScope, QueryScopeCallback } from '@ioc:Adonis/Lucid/Orm';
+import { LucidModel, QueryScope, QueryScopeCallback } from '@ioc:Adonis/Lucid/Model';
 /**
  * Helper to mark a function as query scope
  */

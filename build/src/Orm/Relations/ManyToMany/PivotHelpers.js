@@ -12,26 +12,13 @@ exports.PivotHelpers = void 0;
 const SubQueryBuilder_1 = require("./SubQueryBuilder");
 class PivotHelpers {
     constructor(query, aliasSelectColumns) {
-        Object.defineProperty(this, "query", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: query
-        });
-        Object.defineProperty(this, "aliasSelectColumns", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: aliasSelectColumns
-        });
+        this.query = query;
+        this.aliasSelectColumns = aliasSelectColumns;
     }
     /**
      * Prefixes the pivot table name to a column
      */
     prefixPivotTable(column) {
-        if (column.includes('.')) {
-            return column;
-        }
         if (this.query instanceof SubQueryBuilder_1.ManyToManySubQueryBuilder) {
             return `${this.query.relation.pivotTable}.${column}`;
         }
@@ -61,23 +48,6 @@ class PivotHelpers {
         else {
             return this.query[method](key);
         }
-    }
-    /**
-     * Adds a where pivot condition to the query
-     */
-    whereNullPivot(varition, key) {
-        let method = 'whereNull';
-        switch (varition) {
-            case 'or':
-                method = 'orWhereNull';
-                break;
-            case 'not':
-                method = 'whereNotNull';
-                break;
-            case 'orNot':
-                method = 'orWhereNotNull';
-        }
-        return this.query[method](this.prefixPivotTable(key));
     }
     /**
      * Adds a where pivot condition to the query

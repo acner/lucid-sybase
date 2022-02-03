@@ -4,7 +4,6 @@ declare module '@ioc:Adonis/Core/Validator' {
     type DbRowCheckOptions = {
         table: string;
         column: string;
-        dateFormat?: string;
         connection?: string;
         caseInsensitive?: boolean;
         constraints?: {

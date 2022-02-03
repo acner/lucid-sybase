@@ -18,24 +18,9 @@ const SubQueryBuilder_1 = require("./SubQueryBuilder");
  */
 class HasOneQueryClient {
     constructor(relation, parent, client) {
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
-        Object.defineProperty(this, "parent", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: parent
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
+        this.relation = relation;
+        this.parent = parent;
+        this.client = client;
     }
     /**
      * Generate a related query builder
@@ -72,7 +57,7 @@ class HasOneQueryClient {
      * Save related model instance
      */
     async save(related) {
-        await (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+        await utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             this.parent.$trx = trx;
             await this.parent.save();
             this.relation.hydrateForPersistance(this.parent, related);
@@ -85,7 +70,7 @@ class HasOneQueryClient {
      */
     async create(values) {
         const parent = this.parent;
-        return (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+        return utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             this.parent.$trx = trx;
             await parent.save();
             const valuesToPersist = Object.assign({}, values);
@@ -97,7 +82,7 @@ class HasOneQueryClient {
      * Get the first matching related instance or create a new one
      */
     async firstOrCreate(search, savePayload) {
-        return (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+        return utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             this.parent.$trx = trx;
             await this.parent.save();
             const valuesToPersist = Object.assign({}, search);
@@ -111,7 +96,7 @@ class HasOneQueryClient {
      * Update the existing row or create a new one
      */
     async updateOrCreate(search, updatePayload) {
-        return (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+        return utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             this.parent.$trx = trx;
             await this.parent.save();
             const valuesToPersist = Object.assign({}, search);

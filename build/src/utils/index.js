@@ -12,7 +12,7 @@ exports.sourceFiles = exports.normalizeCherryPickObject = exports.getDDLMethod =
 /// <reference path="../../adonis-typings/index.ts" />
 const path_1 = require("path");
 const utils_1 = require("@poppinss/utils");
-const helpers_1 = require("@poppinss/utils/build/helpers");
+const utils_2 = require("@poppinss/utils");
 /**
  * Ensure that relation is defined
  */
@@ -95,14 +95,14 @@ function syncDiff(original, incoming) {
          * the upcoming row
          */
         if (!originalRow) {
-            result.added[incomingRowId] = incomingRow;
+            result.added[incomingRowId] = incoming[incomingRowId];
         }
         else if (Object.keys(incomingRow).find((key) => incomingRow[key] !== originalRow[key])) {
             /**
              * If any of the row attributes are different, then we must
              * update that row
              */
-            result.updated[incomingRowId] = incomingRow;
+            result.updated[incomingRowId] = incoming[incomingRowId];
         }
         return result;
     }, { added: {}, updated: {} });
@@ -170,18 +170,17 @@ exports.normalizeCherryPickObject = normalizeCherryPickObject;
  */
 function sourceFiles(fromLocation, directory) {
     return new Promise((resolve, reject) => {
-        const path = (0, helpers_1.resolveDir)(fromLocation, directory);
-        const files = (0, helpers_1.fsReadAll)(path);
+        const path = utils_2.resolveDir(fromLocation, directory);
+        const files = utils_2.fsReadAll(path);
         try {
             resolve({
                 directory,
                 files: files.sort().map((file) => {
                     return {
-                        filename: file,
-                        absPath: (0, path_1.join)(path, file),
-                        name: (0, path_1.join)(directory, file.replace(RegExp(`${(0, path_1.extname)(file)}$`), '')),
+                        absPath: path_1.join(path, file),
+                        name: path_1.join(directory, file.replace(RegExp(`${path_1.extname(file)}$`), '')),
                         getSource() {
-                            return (0, utils_1.esmRequire)(this.absPath);
+                            return utils_2.esmRequire(this.absPath);
                         },
                     };
                 }),

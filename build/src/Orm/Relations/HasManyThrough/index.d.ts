@@ -1,8 +1,8 @@
-/// <reference path="../../../../adonis-typings/model.d.ts" />
-/// <reference path="../../../../adonis-typings/orm.d.ts" />
 /// <reference path="../../../../adonis-typings/relations.d.ts" />
-import { QueryClientContract, OneOrMany } from '@ioc:Adonis/Lucid/Database';
-import { LucidRow, LucidModel, ThroughRelationOptions, HasManyThroughRelationContract, HasManyThrough as ModelHasManyThrough } from '@ioc:Adonis/Lucid/Orm';
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model';
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { ThroughRelationOptions, HasManyThroughRelationContract, HasManyThrough as ModelHasManyThrough } from '@ioc:Adonis/Lucid/Relations';
 /**
  * Manages loading and persisting has many through relationship
  */
@@ -38,14 +38,10 @@ export declare class HasManyThrough implements HasManyThroughRelationContract<Lu
     /**
      * Reference to the onQuery hook defined by the user
      */
-    onQueryHook: ((query: import("@ioc:Adonis/Lucid/Orm").RelationSubQueryBuilderContract<LucidModel> | import("@ioc:Adonis/Lucid/Orm").HasManyThroughQueryBuilderContract<LucidModel, any>) => void) | undefined;
+    onQueryHook: ((query: import("@ioc:Adonis/Lucid/Relations").RelationSubQueryBuilderContract<LucidModel> | import("@ioc:Adonis/Lucid/Relations").HasManyThroughQueryBuilderContract<LucidModel, any>) => void) | undefined;
     constructor(relationName: string, relatedModel: () => LucidModel, options: ThroughRelationOptions<ModelHasManyThrough<LucidModel>> & {
         throughModel: () => LucidModel;
     }, model: LucidModel);
-    /**
-     * Clone relationship instance
-     */
-    clone(parent: LucidModel): any;
     /**
      * Returns the alias for the through key
      */

@@ -1,5 +1,6 @@
 import { Hooks } from '@poppinss/hooks';
-import { LucidRow, LucidModel, ExtractModelRelations } from '@ioc:Adonis/Lucid/Orm';
+import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model';
+import { ExtractModelRelations } from '@ioc:Adonis/Lucid/Relations';
 import { EventsList, HooksHandler, StateCallback, MergeCallback, NewUpCallback, DefineCallback, FactoryModelContract, FactoryRelationContract, FactoryBuilderQueryContract } from '@ioc:Adonis/Lucid/Factory';
 import { FactoryManager } from './index';
 /**

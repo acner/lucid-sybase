@@ -1,4 +1,4 @@
-import { DateTimeColumnDecorator } from '@ioc:Adonis/Lucid/Orm';
+import { DateTimeColumnDecorator } from '@ioc:Adonis/Lucid/Model';
 /**
  * Decorator to define a new date time column
  */

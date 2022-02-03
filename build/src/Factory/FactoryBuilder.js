@@ -21,78 +21,29 @@ class FactoryBuilder {
      * on the interface to keep the API clean
      */
     constructor(model, options) {
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: model
-        });
-        Object.defineProperty(this, "options", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: options
-        });
+        this.model = model;
+        this.options = options;
         /**
          * Relationships to setup. Do note: It is possible to load one relationship
          * twice. A practical use case is to apply different states. For example:
          *
          * Make user with "3 active posts" and "2 draft posts"
          */
-        Object.defineProperty(this, "withRelations", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
+        this.withRelations = [];
         /**
          * Belongs to relationships are treated different, since they are
          * persisted before the parent model
          */
-        Object.defineProperty(this, "withBelongsToRelations", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
+        this.withBelongsToRelations = [];
         /**
          * The current index. Updated by `makeMany` and `createMany`
          */
-        Object.defineProperty(this, "currentIndex", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 0
-        });
-        /**
-         * Custom attributes to pass to model merge method
-         */
-        Object.defineProperty(this, "attributes", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.currentIndex = 0;
         /**
          * States to apply. One state can be applied only once and hence
          * a set is used.
          */
-        Object.defineProperty(this, "appliedStates", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Set()
-        });
-        /**
-         * Custom context passed using `useCtx` method. It not defined, we will
-         * create one inline inside `create` and `make` methods
-         */
-        Object.defineProperty(this, "ctx", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.appliedStates = new Set();
     }
     /**
      * Returns factory state

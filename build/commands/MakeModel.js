@@ -18,43 +18,33 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = require("path");
+const util_1 = require("util");
+const child_process_1 = require("child_process");
 const standalone_1 = require("@adonisjs/core/build/standalone");
+const exec = util_1.promisify(child_process_1.execFile);
 class MakeModel extends standalone_1.BaseCommand {
-    constructor() {
-        super(...arguments);
-        /**
-         * The name of the model file.
-         */
-        Object.defineProperty(this, "name", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
+    /**
+     * Executes a given command
+     */
+    async execCommand(command, commandArgs) {
+        const { stdout, stderr } = await exec(command, commandArgs, {
+            env: {
+                ...process.env,
+                FORCE_COLOR: 'true',
+            },
         });
-        /**
-         * Defines if we generate the migration for the model.
-         */
-        Object.defineProperty(this, "migration", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Defines if we generate the controller for the model.
-         */
-        Object.defineProperty(this, "controller", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        if (stdout) {
+            console.log(stdout.trim());
+        }
+        if (stderr) {
+            console.log(stderr.trim());
+        }
     }
     /**
      * Execute command
      */
     async run() {
-        const stub = (0, path_1.join)(__dirname, '..', 'templates', 'model.txt');
+        const stub = path_1.join(__dirname, '..', 'templates', 'model.txt');
         const path = this.application.resolveNamespaceDirectory('models');
         this.generator
             .addFile(this.name, { pattern: 'pascalcase', form: 'singular' })
@@ -63,37 +53,16 @@ class MakeModel extends standalone_1.BaseCommand {
             .useMustache()
             .appRoot(this.application.cliCwd || this.application.appRoot);
         if (this.migration) {
-            await this.kernel.exec('make:migration', [this.name]);
+            await this.execCommand('node', ['ace', 'make:migration', this.name]);
         }
         if (this.controller) {
-            await this.kernel.exec('make:controller', [this.name, '--resource']);
+            await this.execCommand('node', ['ace', 'make:controller', this.name, '--resource']);
         }
         await this.generator.run();
     }
 }
-Object.defineProperty(MakeModel, "commandName", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'make:model'
-});
-Object.defineProperty(MakeModel, "description", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'Make a new Lucid model'
-});
-/**
- * This command loads the application
- */
-Object.defineProperty(MakeModel, "settings", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {
-        loadApp: true,
-    }
-});
+MakeModel.commandName = 'make:model';
+MakeModel.description = 'Make a new Lucid model';
 __decorate([
     standalone_1.args.string({ description: 'Name of the model class' }),
     __metadata("design:type", String)

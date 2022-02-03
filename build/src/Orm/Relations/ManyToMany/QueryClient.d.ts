@@ -1,29 +1,10 @@
-import { LucidModel, LucidRow, ModelObject, ManyToManyClientContract } from '@ioc:Adonis/Lucid/Orm';
-import { OneOrMany, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { ManyToManyClientContract } from '@ioc:Adonis/Lucid/Relations';
+import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model';
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
 import { ManyToMany } from './index';
 import { ManyToManyQueryBuilder } from './QueryBuilder';
 import { ManyToManySubQueryBuilder } from './SubQueryBuilder';
-/**
- * ------------------------------------------------------------
- *                    NO_PIVOT_ATTRS
- * ------------------------------------------------------------
- *
- * We do not define pivot attributes during a save/create calls. Coz, one can
- * attach the related instance with multiple parent instance.
- *
- * For example:
- *
- * user.related('skills').save(skill)
- * user1.related('skills').save(skill)
- *
- * As per the above example, the `skill.$extras.pivot_user_id` will have
- * which user id?
- *
- * Same is true with a create call
- *
- * const skill = user.related('skills').create({ name: 'Programming' })
- * user1.related('skills').save(skill)
- */
 /**
  * Query client for executing queries in scope to the defined
  * relationship
@@ -33,10 +14,6 @@ export declare class ManyToManyQueryClient implements ManyToManyClientContract<M
     private parent;
     private client;
     constructor(relation: ManyToMany, parent: LucidRow, client: QueryClientContract);
-    /**
-     * Returns the timestamps for the pivot row
-     */
-    private getPivotTimestamps;
     /**
      * Generate a related query builder
      */
@@ -63,26 +40,22 @@ export declare class ManyToManyQueryClient implements ManyToManyClientContract<M
     pivotQuery(): ManyToManyQueryBuilder;
     /**
      * Save related model instance.
-     * @note: Read the "NO_PIVOT_ATTRS" section at the top
      */
-    save(related: LucidRow, performSync?: boolean, pivotAttributes?: ModelObject): Promise<void>;
+    save(related: LucidRow, checkExisting?: boolean): Promise<void>;
     /**
      * Save many of related model instances
-     * @note: Read the "NO_PIVOT_ATTRS" section at the top
      */
-    saveMany(related: LucidRow[], performSync?: boolean, pivotAttributes?: (ModelObject | undefined)[]): Promise<void>;
+    saveMany(related: LucidRow[], checkExisting?: boolean): Promise<void>;
     /**
      * Create and persist an instance of related model. Also makes the pivot table
      * entry to create the relationship
-     * @note: Read the "NO_PIVOT_ATTRS" section at the top
      */
-    create(values: ModelObject, pivotAttributes?: ModelObject): Promise<LucidRow>;
+    create(values: ModelObject, checkExisting?: boolean): Promise<LucidRow>;
     /**
      * Create and persist multiple of instances of related model. Also makes
      * the pivot table entries to create the relationship.
-     * @note: Read the "NO_PIVOT_ATTRS" section at the top
      */
-    createMany(values: ModelObject[], pivotAttributes?: (ModelObject | undefined)[]): Promise<LucidRow[]>;
+    createMany(values: ModelObject[], checkExisting?: boolean): Promise<LucidRow[]>;
     /**
      * Attach one or more related models using it's foreign key value
      * by performing insert inside the pivot table.
@@ -103,10 +76,5 @@ export declare class ManyToManyQueryClient implements ManyToManyClientContract<M
      */
     sync(ids: (string | number)[] | {
         [key: string]: ModelObject;
-    }, 
-    /**
-     * Detach means, do not remove existing rows, that are
-     * missing in this new object/array.
-     */
-    detach?: boolean, trx?: TransactionClientContract): Promise<void>;
+    }, detach?: boolean, trx?: TransactionClientContract): Promise<void>;
 }

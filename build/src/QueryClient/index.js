@@ -10,6 +10,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QueryClient = void 0;
 const utils_1 = require("@poppinss/utils");
+const helpers_1 = require("knex/lib/helpers");
 const Dialects_1 = require("../Dialects");
 const QueryBuilder_1 = require("../Orm/QueryBuilder");
 const TransactionClient_1 = require("../TransactionClient");
@@ -24,69 +25,25 @@ const Database_1 = require("../Database/QueryBuilder/Database");
  */
 class QueryClient {
     constructor(mode, connection, emitter) {
-        Object.defineProperty(this, "mode", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: mode
-        });
-        Object.defineProperty(this, "connection", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: connection
-        });
-        Object.defineProperty(this, "emitter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: emitter
-        });
+        this.mode = mode;
+        this.connection = connection;
+        this.emitter = emitter;
         /**
          * Not a transaction client
          */
-        Object.defineProperty(this, "isTransaction", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.isTransaction = false;
         /**
          * The dialect in use
          */
-        Object.defineProperty(this, "dialect", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Dialects_1.dialects[this.connection.dialectName](this)
-        });
-        /**
-         * The profiler to be used for profiling queries
-         */
-        Object.defineProperty(this, "profiler", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.dialect = new Dialects_1.dialects[helpers_1.resolveClientNameWithAliases(this.connection.config.client)](this);
         /**
          * Name of the connection in use
          */
-        Object.defineProperty(this, "connectionName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.connection.name
-        });
+        this.connectionName = this.connection.name;
         /**
          * Is debugging enabled
          */
-        Object.defineProperty(this, "debug", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: !!this.connection.config.debug
-        });
+        this.debug = !!this.connection.config.debug;
     }
     /**
      * Returns schema instance for the write client
@@ -138,14 +95,15 @@ class QueryClient {
      * Returns an instance of a transaction. Each transaction will
      * query and hold a single connection for all queries.
      */
-    async transaction(callback, options) {
-        const trx = await this.getWriteClient().transaction(options);
+    async transaction(callback) {
+        var _a;
+        const trx = await this.getWriteClient().transaction();
         const transaction = new TransactionClient_1.TransactionClient(trx, this.dialect, this.connectionName, this.debug, this.emitter);
         /**
          * Always make sure to pass the profiler and emitter down to the transaction
          * client as well
          */
-        transaction.profiler = this.profiler?.create('trx:begin', { state: 'begin' });
+        transaction.profiler = (_a = this.profiler) === null || _a === void 0 ? void 0 : _a.create('trx:begin', { state: 'begin' });
         /**
          * Self managed transaction
          */
@@ -215,7 +173,7 @@ class QueryClient {
      * Returns reference builder.
      */
     ref(reference) {
-        return new Reference_1.ReferenceBuilder(reference, this.getReadClient().client);
+        return new Reference_1.ReferenceBuilder(reference);
     }
     /**
      * Returns instance of a query builder and selects the table

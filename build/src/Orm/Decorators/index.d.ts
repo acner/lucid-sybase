@@ -1,6 +1,7 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
 import 'reflect-metadata';
-import { HasOneDecorator, HasManyDecorator, HooksDecorator, ColumnDecorator, ComputedDecorator, BelongsToDecorator, DateColumnDecorator, ManyToManyDecorator, DateTimeColumnDecorator, HasManyThroughDecorator } from '@ioc:Adonis/Lucid/Orm';
+import { HooksDecorator, ColumnDecorator, ComputedDecorator, DateColumnDecorator, DateTimeColumnDecorator } from '@ioc:Adonis/Lucid/Model';
+import { HasOneDecorator, HasManyDecorator, BelongsToDecorator, ManyToManyDecorator, HasManyThroughDecorator } from '@ioc:Adonis/Lucid/Relations';
 /**
  * Define property on a model as a column. The decorator needs a
  * proper model class inheriting the base model

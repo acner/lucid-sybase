@@ -12,11 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Connection = void 0;
+/// <reference path="../../adonis-typings/index.ts" />
 const knex_1 = __importDefault(require("knex"));
 const events_1 = require("events");
 const utils_1 = require("@poppinss/utils");
 const knex_dynamic_connection_1 = require("knex-dynamic-connection");
-const helpers_1 = require("knex/lib/util/helpers");
 const Logger_1 = require("./Logger");
 /**
  * Connection class manages a given database connection. Internally it uses
@@ -26,84 +26,25 @@ const Logger_1 = require("./Logger");
 class Connection extends events_1.EventEmitter {
     constructor(name, config, logger) {
         super();
-        Object.defineProperty(this, "name", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: name
-        });
-        Object.defineProperty(this, "config", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: config
-        });
-        Object.defineProperty(this, "logger", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: logger
-        });
-        /**
-         * Reference to knex. The instance is created once the `open`
-         * method is invoked
-         */
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Read client when read/write replicas are defined in the config, otherwise
-         * it is a reference to the `client`.
-         */
-        Object.defineProperty(this, "readClient", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Connection dialect name
-         */
-        Object.defineProperty(this, "dialectName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: (0, helpers_1.resolveClientNameWithAliases)(this.config.client)
-        });
+        this.name = name;
+        this.config = config;
+        this.logger = logger;
         /**
          * A boolean to know if connection operates on read/write
          * replicas
          */
-        Object.defineProperty(this, "hasReadWriteReplicas", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: !!(this.config.replicas &&
-                this.config.replicas.read &&
-                this.config.replicas.write)
-        });
+        this.hasReadWriteReplicas = !!(this.config.replicas &&
+            this.config.replicas.read &&
+            this.config.replicas.write);
         /**
          * Config for one or more read replicas. Only exists, when replicas are
          * defined
          */
-        Object.defineProperty(this, "readReplicas", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
+        this.readReplicas = [];
         /**
          * The round robin counter for reading config
          */
-        Object.defineProperty(this, "roundRobinCounter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 0
-        });
+        this.roundRobinCounter = 0;
         this.validateConfig();
     }
     /**
@@ -239,10 +180,10 @@ class Connection extends events_1.EventEmitter {
      * Creates the write connection.
      */
     setupWriteConnection() {
-        this.client = (0, knex_1.default)(Object.assign({ log: new Logger_1.Logger(this.name, this.logger) }, this.getWriteConfig(), {
+        this.client = knex_1.default(Object.assign({ log: new Logger_1.Logger(this.name, this.logger) }, this.getWriteConfig(), {
             debug: false,
         }));
-        (0, knex_dynamic_connection_1.patchKnex)(this.client, this.writeConfigResolver.bind(this));
+        knex_dynamic_connection_1.patchKnex(this.client, this.writeConfigResolver.bind(this));
     }
     /**
      * Creates the read connection. If there aren't any replicas in use, then
@@ -254,10 +195,10 @@ class Connection extends events_1.EventEmitter {
             return;
         }
         this.logger.trace({ connection: this.name }, 'setting up read/write replicas');
-        this.readClient = (0, knex_1.default)(Object.assign({ log: new Logger_1.Logger(this.name, this.logger) }, this.getReadConfig(), {
+        this.readClient = knex_1.default(Object.assign({ log: new Logger_1.Logger(this.name, this.logger) }, this.getReadConfig(), {
             debug: false,
         }));
-        (0, knex_dynamic_connection_1.patchKnex)(this.readClient, this.readConfigResolver.bind(this));
+        knex_dynamic_connection_1.patchKnex(this.readClient, this.readConfigResolver.bind(this));
     }
     /**
      * Checks all the read hosts by running a query on them. Stops
@@ -272,14 +213,9 @@ class Connection extends events_1.EventEmitter {
         for (let _ of this.readReplicas) {
             configCopy.connection = this.readConfigResolver(this.config);
             this.logger.trace({ connection: this.name }, 'spawing health check read connection');
-            const client = (0, knex_1.default)(configCopy);
+            const client = knex_1.default(configCopy);
             try {
-                if (this.dialectName === 'oracledb') {
-                    await client.raw('SELECT 1 + 1 AS result FROM dual');
-                }
-                else {
-                    await client.raw('SELECT 1 + 1 AS result');
-                }
+                await client.raw('SELECT 1 + 1 AS result');
             }
             catch (err) {
                 error = err;
@@ -303,12 +239,7 @@ class Connection extends events_1.EventEmitter {
      */
     async checkWriteHost() {
         try {
-            if (this.dialectName === 'oracledb') {
-                await this.client.raw('SELECT 1 + 1 AS result FROM dual');
-            }
-            else {
-                await this.client.raw('SELECT 1 + 1 AS result');
-            }
+            await this.client.raw('SELECT 1 + 1 AS result');
         }
         catch (error) {
             return error;

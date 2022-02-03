@@ -10,9 +10,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ModelQueryBuilder = void 0;
 const utils_1 = require("@poppinss/utils");
-const utils_2 = require("../../utils");
 const Preloader_1 = require("../Preloader");
-const Paginator_1 = require("../Paginator");
 const QueryRunner_1 = require("../../QueryRunner");
 const Chainable_1 = require("../../Database/QueryBuilder/Chainable");
 const SimplePaginator_1 = require("../../Database/Paginator/SimplePaginator");
@@ -22,12 +20,7 @@ const SimplePaginator_1 = require("../../Database/Paginator/SimplePaginator");
  */
 class ModelScopes {
     constructor(builder) {
-        Object.defineProperty(this, "builder", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: builder
-        });
+        this.builder = builder;
         return new Proxy(this, {
             get(target, key) {
                 if (typeof target.builder.model[key] === 'function') {
@@ -53,158 +46,70 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
             const subQuery = new ModelQueryBuilder($builder, this.model, this.client);
             subQuery.isChildQuery = true;
             userFn(subQuery);
-            subQuery.applyWhere();
         };
     }) {
         super(builder, customFn, model.$keys.attributesToColumns.resolve.bind(model.$keys.attributesToColumns));
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: model
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
+        this.model = model;
+        this.client = client;
         /**
          * Sideloaded attributes that will be passed to the model instances
          */
-        Object.defineProperty(this, "sideloaded", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.sideloaded = {};
         /**
          * A copy of defined preloads on the model instance
          */
-        Object.defineProperty(this, "preloader", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Preloader_1.Preloader(this.model)
-        });
-        /**
-         * A custom callback to transform each model row
-         */
-        Object.defineProperty(this, "rowTransformerCallback", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.preloader = new Preloader_1.Preloader(this.model);
         /**
          * A references to model scopes wrapper. It is lazily initialized
          * only when the `apply` method is invoked
          */
-        Object.defineProperty(this, "scopesWrapper", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: undefined
-        });
+        this.scopesWrapper = undefined;
         /**
          * Control whether or not to wrap adapter result to model
          * instances or not
          */
-        Object.defineProperty(this, "wrapResultsToModelInstances", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: true
-        });
-        /**
-         * Custom data someone want to send to the profiler and the
-         * query event
-         */
-        Object.defineProperty(this, "customReporterData", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.wrapResultsToModelInstances = true;
         /**
          * Control whether to debug the query or not. The initial
          * value is inherited from the query client
          */
-        Object.defineProperty(this, "debugQueries", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.client.debug
-        });
+        this.debugQueries = this.client.debug;
         /**
          * Self join counter, increments with every "withCount"
          * "has" and "whereHas" queries.
          */
-        Object.defineProperty(this, "joinCounter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 0
-        });
+        this.joinCounter = 0;
         /**
          * Options that must be passed to all new model instances
          */
-        Object.defineProperty(this, "clientOptions", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {
-                client: this.client,
-                connection: this.client.connectionName,
-                profiler: this.client.profiler,
-            }
-        });
+        this.clientOptions = {
+            client: this.client,
+            connection: this.client.connectionName,
+            profiler: this.client.profiler,
+        };
         /**
          * Whether or not query is a subquery for `.where` callback
          */
-        Object.defineProperty(this, "isChildQuery", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        /**
-         * Assign table when not already assigned
-         */
-        if (!builder['_single'] || !builder['_single'].table) {
-            builder.table(model.table);
-        }
+        this.isChildQuery = false;
+        builder.table(model.table);
     }
     /**
      * Executes the current query
      */
     async execQuery() {
-        this.applyWhere();
         const isWriteQuery = ['update', 'del', 'insert'].includes(this.knexQuery['_method']);
         const queryData = Object.assign(this.getQueryData(), this.customReporterData);
         const rows = await new QueryRunner_1.QueryRunner(this.client, this.debugQueries, queryData).run(this.knexQuery);
         /**
          * Return the rows as it is when query is a write query
          */
-        if (isWriteQuery || !this.wrapResultsToModelInstances) {
+        if (isWriteQuery || this.hasAggregates || !this.wrapResultsToModelInstances) {
             return Array.isArray(rows) ? rows : [rows];
         }
         /**
-         * Convert fetched results to an array of model instances
+         * Convert fetch results to an array of model instances
          */
-        const modelInstances = rows.reduce((models, row) => {
-            if ((0, utils_2.isObject)(row)) {
-                const modelInstance = this.model.$createFromAdapterResult(row, this.sideloaded, this.clientOptions);
-                /**
-                 * Transform row when row transformer is defined
-                 */
-                if (this.rowTransformerCallback) {
-                    this.rowTransformerCallback(modelInstance);
-                }
-                models.push(modelInstance);
-            }
-            return models;
-        }, []);
+        const modelInstances = this.model.$createMultipleFromAdapterResult(rows, this.sideloaded, this.clientOptions);
         /**
          * Preload for model instances
          */
@@ -315,39 +220,13 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
         return this;
     }
     /**
-     * Define a custom callback to transform rows
-     */
-    rowTransformer(callback) {
-        this.rowTransformerCallback = callback;
-        return this;
-    }
-    /**
      * Clone the current query builder
      */
     clone() {
         const clonedQuery = new ModelQueryBuilder(this.knexQuery.clone(), this.model, this.client);
         this.applyQueryFlags(clonedQuery);
         clonedQuery.sideloaded = Object.assign({}, this.sideloaded);
-        clonedQuery.debug(this.debugQueries);
-        clonedQuery.reporterData(this.customReporterData);
-        this.rowTransformerCallback && this.rowTransformer(this.rowTransformerCallback);
         return clonedQuery;
-    }
-    /**
-     * Define returning columns
-     */
-    returning(columns) {
-        /**
-         * Do not chain `returning` in sqlite3 to avoid knex warnings
-         */
-        if (this.client && ['sqlite3', 'mysql'].includes(this.client.dialect.name)) {
-            return this;
-        }
-        columns = Array.isArray(columns)
-            ? columns.map((column) => this.resolveKey(column))
-            : this.resolveKey(columns);
-        this.knexQuery.returning(columns);
-        return this;
     }
     /**
      * Define a query to constraint to be defined when condition is truthy
@@ -379,23 +258,9 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
      * Applies the query scopes on the current query builder
      * instance
      */
-    withScopes(callback) {
+    apply(callback) {
         this.scopesWrapper = this.scopesWrapper || new ModelScopes(this);
         callback(this.scopesWrapper);
-        return this;
-    }
-    /**
-     * Applies the query scopes on the current query builder
-     * instance
-     */
-    apply(callback) {
-        return this.withScopes(callback);
-    }
-    /**
-     * Define a custom preloader instance for preloading relationships
-     */
-    usePreloader(preloader) {
-        this.preloader = preloader;
         return this;
     }
     /**
@@ -410,12 +275,9 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
      * will implicitly set a `limit` on the query
      */
     async first() {
-        const isFetchCall = this.wrapResultsToModelInstances && this.knexQuery['_method'] === 'select';
-        if (isFetchCall) {
-            await this.model.$hooks.exec('before', 'find', this);
-        }
+        await this.model.$hooks.exec('before', 'find', this);
         const result = await this.limit(1).execQuery();
-        if (result[0] && isFetchCall) {
+        if (result[0]) {
             await this.model.$hooks.exec('after', 'find', result[0]);
         }
         return result[0] || null;
@@ -432,20 +294,23 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
         return row;
     }
     /**
-     * Load aggregate value as a subquery for a relationship
+     * Get count of a relationship along side the main query results
      */
-    withAggregate(relationName, userCallback) {
+    withCount(relationName, userCallback) {
         const subQuery = this.getRelationship(relationName).subQuery(this.client);
         subQuery.selfJoinCounter = this.joinCounter;
         /**
          * Invoke user callback
          */
-        userCallback(subQuery);
+        if (typeof userCallback === 'function') {
+            userCallback(subQuery);
+        }
         /**
-         * Raise exception if the callback has not defined an aggregate
+         * If user callback has not defined any aggregates, then we should
+         * add a count
          */
         if (!subQuery.hasAggregates) {
-            throw new utils_1.Exception('"withAggregate" callback must use an aggregate function');
+            subQuery.count('*');
         }
         /**
          * Select "*" when no custom selects are defined
@@ -454,10 +319,10 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
             this.select(`${this.model.table}.*`);
         }
         /**
-         * Throw exception when no alias
+         * Define alias, when a custom alias is not defined
          */
         if (!subQuery.subQueryAlias) {
-            throw new utils_1.Exception('"withAggregate" callback must define the alias for the aggregate query');
+            subQuery.as(`${relationName}_count`);
         }
         /**
          * Count subquery selection
@@ -467,29 +332,6 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
          * Bump the counter
          */
         this.joinCounter++;
-        return this;
-    }
-    /**
-     * Get count of a relationship along side the main query results
-     */
-    withCount(relationName, userCallback) {
-        this.withAggregate(relationName, (subQuery) => {
-            if (typeof userCallback === 'function') {
-                userCallback(subQuery);
-            }
-            /**
-             * Count "*"
-             */
-            if (!subQuery.hasAggregates) {
-                subQuery.count('*');
-            }
-            /**
-             * Define alias for the subquery
-             */
-            if (!subQuery.subQueryAlias) {
-                subQuery.as(`${relationName}_count`);
-            }
-        });
         return this;
     }
     /**
@@ -568,7 +410,7 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
      * Define a relationship to be preloaded
      */
     preload(relationName, userCallback) {
-        this.preloader.load(relationName, userCallback);
+        this.preloader.preload(relationName, userCallback);
         return this;
     }
     /**
@@ -577,7 +419,7 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
      */
     increment(column, counter) {
         this.ensureCanPerformWrites();
-        this.knexQuery.increment(this.resolveKey(column, true), counter);
+        this.knexQuery.increment(column, counter);
         return this;
     }
     /**
@@ -586,23 +428,15 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
      */
     decrement(column, counter) {
         this.ensureCanPerformWrites();
-        this.knexQuery.decrement(this.resolveKey(column, true), counter);
+        this.knexQuery.decrement(column, counter);
         return this;
     }
     /**
      * Perform update
      */
-    update(column, value, returning) {
+    update(columns) {
         this.ensureCanPerformWrites();
-        if (value === undefined && returning === undefined) {
-            this.knexQuery.update(this.resolveKey(column, true));
-        }
-        else if (returning === undefined) {
-            this.knexQuery.update(this.resolveKey(column), value);
-        }
-        else {
-            this.knexQuery.update(this.resolveKey(column), value, returning);
-        }
+        this.knexQuery.update(columns);
         return this;
     }
     /**
@@ -637,7 +471,6 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
      * Returns SQL query as a string
      */
     toQuery() {
-        this.applyWhere();
         return this.knexQuery.toQuery();
     }
     /**
@@ -665,7 +498,6 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
      * Paginate through rows inside a given table
      */
     async paginate(page, perPage = 20) {
-        const isFetchCall = this.wrapResultsToModelInstances && this.knexQuery['_method'] === 'select';
         /**
          * Cast to number
          */
@@ -676,46 +508,26 @@ class ModelQueryBuilder extends Chainable_1.Chainable {
             .clearLimit()
             .clearOffset()
             .clearSelect()
-            .count('* as total')
-            .pojo();
+            .count('* as total');
         /**
          * We pass both the counts query and the main query to the
          * paginate hook
          */
-        if (isFetchCall) {
-            await this.model.$hooks.exec('before', 'paginate', [countQuery, this]);
-            await this.model.$hooks.exec('before', 'fetch', this);
-        }
-        const aggregateResult = await countQuery.exec();
+        await this.model.$hooks.exec('before', 'paginate', [countQuery, this]);
+        await this.model.$hooks.exec('before', 'fetch', this);
+        const aggregateResult = await countQuery.execQuery();
         const total = this.hasGroupBy ? aggregateResult.length : aggregateResult[0].total;
         const results = total > 0 ? await this.forPage(page, perPage).execQuery() : [];
-        /**
-         * Choose paginator
-         */
-        const paginator = this.wrapResultsToModelInstances
-            ? new Paginator_1.ModelPaginator(total, perPage, page, ...results)
-            : new SimplePaginator_1.SimplePaginator(total, perPage, page, ...results);
-        paginator.namingStrategy = this.model.namingStrategy;
-        if (isFetchCall) {
-            await this.model.$hooks.exec('after', 'paginate', paginator);
-            await this.model.$hooks.exec('after', 'fetch', results);
-        }
+        const paginator = new SimplePaginator_1.SimplePaginator(results, total, perPage, page);
+        await this.model.$hooks.exec('after', 'paginate', paginator);
+        await this.model.$hooks.exec('after', 'fetch', results);
         return paginator;
     }
     /**
      * Get sql representation of the query
      */
     toSQL() {
-        this.applyWhere();
         return this.knexQuery.toSQL();
-    }
-    /**
-     * Get rows back as a plain javascript object and not an array
-     * of model instances
-     */
-    pojo() {
-        this.wrapResultsToModelInstances = false;
-        return this;
     }
     /**
      * Implementation of `then` for the promise API
@@ -746,15 +558,5 @@ exports.ModelQueryBuilder = ModelQueryBuilder;
 /**
  * Required by macroable
  */
-Object.defineProperty(ModelQueryBuilder, "macros", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});
-Object.defineProperty(ModelQueryBuilder, "getters", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});
+ModelQueryBuilder.macros = {};
+ModelQueryBuilder.getters = {};

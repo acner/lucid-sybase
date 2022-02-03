@@ -1,6 +1,6 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
-import { Knex } from 'knex';
-import { RawBuilderContract } from '@ioc:Adonis/Lucid/Database';
+import knex from 'knex';
+import { RawBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
 /**
  * Exposes the API to construct raw queries. If you want to execute
  * raw queries, you can use the RawQueryBuilder
@@ -18,5 +18,5 @@ export declare class RawBuilder implements RawBuilderContract {
     /**
      * Converts the raw query to knex raw query instance
      */
-    toKnex(client: Knex.Client): Knex.Raw;
+    toKnex(client: knex.Client): knex.Raw;
 }

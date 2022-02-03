@@ -1,8 +1,10 @@
 /// <reference types="faker" />
 declare module '@ioc:Adonis/Lucid/Factory' {
     import faker from 'faker';
-    import { OneOrMany, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
-    import { LucidRow, LucidModel, ModelAttributes, ModelAdapterOptions, RelationshipsContract, ExtractModelRelations } from '@ioc:Adonis/Lucid/Orm';
+    import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+    import { TransactionClientContract, QueryClientContract } from '@ioc:Adonis/Lucid/Database';
+    import { ExtractModelRelations, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations';
+    import { LucidRow, LucidModel, ModelAttributes, ModelAdapterOptions } from '@ioc:Adonis/Lucid/Model';
     /**
      * ------------------------------------------------------
      *  Helpers
@@ -224,7 +226,7 @@ declare module '@ioc:Adonis/Lucid/Factory' {
         /**
          * Define a relationship on another factory
          */
-        relation<K extends ExtractModelRelations<InstanceType<Model>>, Relation>(relation: K, callback: Relation): this & {
+        relation<K extends ExtractModelRelations<InstanceType<Model>>, Relation extends any>(relation: K, callback: Relation): this & {
             relations: {
                 [P in K]: Relation;
             };

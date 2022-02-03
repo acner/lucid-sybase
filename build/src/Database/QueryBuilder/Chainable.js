@@ -15,7 +15,6 @@ const utils_2 = require("../../utils");
 const Raw_1 = require("./Raw");
 const Raw_2 = require("../StaticBuilder/Raw");
 const Reference_1 = require("../StaticBuilder/Reference");
-const WRAPPING_METHODS = ['where', 'orWhere', 'whereNot', 'orWhereNot'];
 /**
  * The chainable query builder to consturct SQL queries for selecting, updating and
  * deleting records.
@@ -26,109 +25,12 @@ const WRAPPING_METHODS = ['where', 'orWhere', 'whereNot', 'orWhereNot'];
 class Chainable extends macroable_1.Macroable {
     constructor(knexQuery, queryCallback, keysResolver) {
         super();
-        Object.defineProperty(this, "knexQuery", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: knexQuery
-        });
-        Object.defineProperty(this, "queryCallback", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: queryCallback
-        });
-        Object.defineProperty(this, "keysResolver", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: keysResolver
-        });
-        Object.defineProperty(this, "hasAggregates", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "hasGroupBy", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "hasUnion", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        /**
-         * Collection where clauses in a 2nd array. Calling `wrapExisting`
-         * adds a new stack item
-         */
-        Object.defineProperty(this, "whereStack", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: [[]]
-        });
-        /**
-         * Custom alias for the query results. Ignored if it not a
-         * subquery
-         */
-        Object.defineProperty(this, "subQueryAlias", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-    }
-    /**
-     * Returns the recent most array from the where stack
-     */
-    getRecentStackItem() {
-        return this.whereStack[this.whereStack.length - 1];
-    }
-    /**
-     * Returns the wrapping method for a given where method
-     */
-    getWrappingMethod(method) {
-        if (WRAPPING_METHODS.includes(method)) {
-            return {
-                method: 'where',
-                wrappingMethod: method,
-            };
-        }
-        if (method.startsWith('or')) {
-            return {
-                method: method,
-                wrappingMethod: 'orWhere',
-            };
-        }
-        return {
-            method: method,
-            wrappingMethod: 'where',
-        };
-    }
-    /**
-     * Applies the where clauses
-     */
-    applyWhere() {
-        this.knexQuery.clearWhere();
-        if (this.whereStack.length === 1) {
-            this.whereStack[0].forEach(({ method, args }) => {
-                this.knexQuery[method](...args);
-            });
-            return;
-        }
-        this.whereStack.forEach((collection) => {
-            const firstItem = collection.shift();
-            const wrapper = this.getWrappingMethod(firstItem.method);
-            this.knexQuery[wrapper.wrappingMethod]((subquery) => {
-                subquery[wrapper.method](...firstItem.args);
-                collection.forEach(({ method, args }) => subquery[method](...args));
-            });
-        });
+        this.knexQuery = knexQuery;
+        this.queryCallback = queryCallback;
+        this.keysResolver = keysResolver;
+        this.hasAggregates = false;
+        this.hasGroupBy = false;
+        this.hasUnion = false;
     }
     /**
      * An array of selected columns
@@ -181,18 +83,6 @@ class Chainable extends macroable_1.Macroable {
         };
     }
     /**
-     * Resolves the column name considering raw queries as well.
-     */
-    resolveColumn(columns, checkForObject = false, returnValue) {
-        if (columns instanceof Raw_1.RawQueryBuilder) {
-            return columns['knexQuery'];
-        }
-        if (columns instanceof Raw_2.RawBuilder) {
-            return columns.toKnex(this.knexQuery.client);
-        }
-        return this.resolveKey(columns, checkForObject, returnValue);
-    }
-    /**
      * Resolves column names
      */
     resolveKey(columns, checkForObject = false, returnValue) {
@@ -212,7 +102,7 @@ class Chainable extends macroable_1.Macroable {
         /**
          * If check for objects is enabled, then resolve object keys
          */
-        if (checkForObject && (0, utils_2.isObject)(columns)) {
+        if (checkForObject && utils_2.isObject(columns)) {
             return Object.keys(columns).reduce((result, column) => {
                 result[this.keysResolver(column)] = columns[column];
                 return result;
@@ -231,9 +121,6 @@ class Chainable extends macroable_1.Macroable {
         query.hasAggregates = this.hasAggregates;
         query.hasGroupBy = this.hasGroupBy;
         query.hasUnion = this.hasUnion;
-        query.whereStack = this.whereStack.map((collection) => {
-            return collection.map((node) => node);
-        });
     }
     /**
      * Transforms the value to something that knex can internally understand and
@@ -247,7 +134,6 @@ class Chainable extends macroable_1.Macroable {
      */
     transformValue(value) {
         if (value instanceof Chainable) {
-            value.applyWhere();
             return value.knexQuery;
         }
         if (value instanceof Reference_1.ReferenceBuilder) {
@@ -306,30 +192,14 @@ class Chainable extends macroable_1.Macroable {
         return this;
     }
     /**
-     * Wrap existing where clauses to its own group
-     */
-    wrapExisting() {
-        if (this.getRecentStackItem().length) {
-            this.whereStack.push([]);
-        }
-        return this;
-    }
-    /**
      * Add a `where` clause
      */
     where(key, operator, value) {
-        const whereClauses = this.getRecentStackItem();
         if (value !== undefined) {
-            whereClauses.push({
-                method: 'where',
-                args: [this.resolveColumn(key), operator, this.transformValue(value)],
-            });
+            this.knexQuery.where(this.resolveKey(key), operator, this.transformValue(value));
         }
         else if (operator !== undefined) {
-            whereClauses.push({
-                method: 'where',
-                args: [this.resolveColumn(key), this.transformValue(operator)],
-            });
+            this.knexQuery.where(this.resolveKey(key), this.transformValue(operator));
         }
         else {
             /**
@@ -337,10 +207,7 @@ class Chainable extends macroable_1.Macroable {
              * for raw/sub queries. This is our limitation to have consistent API
              */
             this.validateWhereSingleArgument(key, 'where');
-            whereClauses.push({
-                method: 'where',
-                args: [this.resolveColumn(key, true, this.transformCallback(key))],
-            });
+            this.knexQuery.where(this.resolveKey(key, true, this.transformCallback(key)));
         }
         return this;
     }
@@ -348,25 +215,15 @@ class Chainable extends macroable_1.Macroable {
      * Add a `or where` clause
      */
     orWhere(key, operator, value) {
-        const whereClauses = this.getRecentStackItem();
         if (value !== undefined) {
-            whereClauses.push({
-                method: 'orWhere',
-                args: [this.resolveColumn(key), operator, this.transformValue(value)],
-            });
+            this.knexQuery.orWhere(this.resolveKey(key), operator, this.transformValue(value));
         }
         else if (operator !== undefined) {
-            whereClauses.push({
-                method: 'orWhere',
-                args: [this.resolveColumn(key), this.transformValue(operator)],
-            });
+            this.knexQuery.orWhere(this.resolveKey(key), this.transformValue(operator));
         }
         else {
             this.validateWhereSingleArgument(key, 'orWhere');
-            whereClauses.push({
-                method: 'orWhere',
-                args: [this.resolveColumn(key, true, this.transformCallback(key))],
-            });
+            this.knexQuery.orWhere(this.resolveKey(key, true, this.transformCallback(key)));
         }
         return this;
     }
@@ -380,25 +237,15 @@ class Chainable extends macroable_1.Macroable {
      * Adding `where not` clause
      */
     whereNot(key, operator, value) {
-        const whereClauses = this.getRecentStackItem();
         if (value !== undefined) {
-            whereClauses.push({
-                method: 'whereNot',
-                args: [this.resolveColumn(key), operator, this.transformValue(value)],
-            });
+            this.knexQuery.whereNot(this.resolveKey(key), operator, this.transformValue(value));
         }
         else if (operator !== undefined) {
-            whereClauses.push({
-                method: 'whereNot',
-                args: [this.resolveColumn(key), this.transformValue(operator)],
-            });
+            this.knexQuery.whereNot(this.resolveKey(key), this.transformValue(operator));
         }
         else {
             this.validateWhereSingleArgument(key, 'whereNot');
-            whereClauses.push({
-                method: 'whereNot',
-                args: [this.resolveColumn(key, true, this.transformCallback(key))],
-            });
+            this.knexQuery.whereNot(this.resolveKey(key, true, this.transformCallback(key)));
         }
         return this;
     }
@@ -406,25 +253,15 @@ class Chainable extends macroable_1.Macroable {
      * Adding `or where not` clause
      */
     orWhereNot(key, operator, value) {
-        const whereClauses = this.getRecentStackItem();
         if (value !== undefined) {
-            whereClauses.push({
-                method: 'orWhereNot',
-                args: [this.resolveColumn(key), operator, this.transformValue(value)],
-            });
+            this.knexQuery.orWhereNot(this.resolveKey(key), operator, this.transformValue(value));
         }
         else if (operator !== undefined) {
-            whereClauses.push({
-                method: 'orWhereNot',
-                args: [this.resolveColumn(key), this.transformValue(operator)],
-            });
+            this.knexQuery.orWhereNot(this.resolveKey(key), this.transformValue(operator));
         }
         else {
             this.validateWhereSingleArgument(key, 'orWhereNot');
-            whereClauses.push({
-                method: 'orWhereNot',
-                args: [this.resolveColumn(key, true, this.transformCallback(key))],
-            });
+            this.knexQuery.orWhereNot(this.resolveKey(key, true, this.transformCallback(key)));
         }
         return this;
     }
@@ -439,10 +276,10 @@ class Chainable extends macroable_1.Macroable {
      */
     whereColumn(column, operator, comparisonColumn) {
         if (comparisonColumn !== undefined) {
-            this.where(column, operator, new Reference_1.ReferenceBuilder(comparisonColumn, this.knexQuery.client));
+            this.where(column, operator, new Reference_1.ReferenceBuilder(comparisonColumn));
         }
         else {
-            this.where(column, new Reference_1.ReferenceBuilder(operator, this.knexQuery.client));
+            this.where(column, new Reference_1.ReferenceBuilder(operator));
         }
         return this;
     }
@@ -451,10 +288,10 @@ class Chainable extends macroable_1.Macroable {
      */
     orWhereColumn(column, operator, comparisonColumn) {
         if (comparisonColumn !== undefined) {
-            this.orWhere(column, operator, new Reference_1.ReferenceBuilder(comparisonColumn, this.knexQuery.client));
+            this.orWhere(column, operator, new Reference_1.ReferenceBuilder(comparisonColumn));
         }
         else {
-            this.orWhere(column, new Reference_1.ReferenceBuilder(operator, this.knexQuery.client));
+            this.orWhere(column, new Reference_1.ReferenceBuilder(operator));
         }
         return this;
     }
@@ -469,10 +306,10 @@ class Chainable extends macroable_1.Macroable {
      */
     whereNotColumn(column, operator, comparisonColumn) {
         if (comparisonColumn !== undefined) {
-            this.whereNot(column, operator, new Reference_1.ReferenceBuilder(comparisonColumn, this.knexQuery.client));
+            this.whereNot(column, operator, new Reference_1.ReferenceBuilder(comparisonColumn));
         }
         else {
-            this.whereNot(column, new Reference_1.ReferenceBuilder(operator, this.knexQuery.client));
+            this.whereNot(column, new Reference_1.ReferenceBuilder(operator));
         }
         return this;
     }
@@ -481,10 +318,10 @@ class Chainable extends macroable_1.Macroable {
      */
     orWhereNotColumn(column, operator, comparisonColumn) {
         if (comparisonColumn !== undefined) {
-            this.orWhereNot(column, operator, new Reference_1.ReferenceBuilder(comparisonColumn, this.knexQuery.client));
+            this.orWhereNot(column, operator, new Reference_1.ReferenceBuilder(comparisonColumn));
         }
         else {
-            this.orWhereNot(column, new Reference_1.ReferenceBuilder(operator, this.knexQuery.client));
+            this.orWhereNot(column, new Reference_1.ReferenceBuilder(operator));
         }
         return this;
     }
@@ -502,13 +339,9 @@ class Chainable extends macroable_1.Macroable {
             ? value.map((one) => this.transformValue(one))
             : this.transformValue(value);
         columns = Array.isArray(columns)
-            ? columns.map((column) => this.resolveColumn(column))
-            : this.resolveColumn(columns);
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'whereIn',
-            args: [columns, value],
-        });
+            ? columns.map((column) => this.resolveKey(column))
+            : this.resolveKey(columns);
+        this.knexQuery.whereIn(columns, value);
         return this;
     }
     /**
@@ -519,13 +352,9 @@ class Chainable extends macroable_1.Macroable {
             ? value.map((one) => this.transformValue(one))
             : this.transformValue(value);
         columns = Array.isArray(columns)
-            ? columns.map((column) => this.resolveColumn(column))
-            : this.resolveColumn(columns);
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'orWhereIn',
-            args: [columns, value],
-        });
+            ? columns.map((column) => this.resolveKey(column))
+            : this.resolveKey(columns);
+        this.knexQuery.orWhereIn(columns, value);
         return this;
     }
     /**
@@ -542,13 +371,9 @@ class Chainable extends macroable_1.Macroable {
             ? value.map((one) => this.transformValue(one))
             : this.transformValue(value);
         columns = Array.isArray(columns)
-            ? columns.map((column) => this.resolveColumn(column))
-            : this.resolveColumn(columns);
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'whereNotIn',
-            args: [columns, value],
-        });
+            ? columns.map((column) => this.resolveKey(column))
+            : this.resolveKey(columns);
+        this.knexQuery.whereNotIn(columns, value);
         return this;
     }
     /**
@@ -559,13 +384,9 @@ class Chainable extends macroable_1.Macroable {
             ? value.map((one) => this.transformValue(one))
             : this.transformValue(value);
         columns = Array.isArray(columns)
-            ? columns.map((column) => this.resolveColumn(column))
-            : this.resolveColumn(columns);
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'orWhereNotIn',
-            args: [columns, value],
-        });
+            ? columns.map((column) => this.resolveKey(column))
+            : this.resolveKey(columns);
+        this.knexQuery.orWhereNotIn(columns, value);
         return this;
     }
     /**
@@ -578,78 +399,54 @@ class Chainable extends macroable_1.Macroable {
      * Adding `where not null` clause
      */
     whereNull(key) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'whereNull',
-            args: [this.resolveColumn(key)],
-        });
+        this.knexQuery.whereNull(this.resolveKey(key));
         return this;
     }
     /**
      * Adding `or where not null` clause
      */
     orWhereNull(key) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'orWhereNull',
-            args: [this.resolveColumn(key)],
-        });
+        this.knexQuery.orWhereNull(this.resolveKey(key));
         return this;
     }
     /**
      * Alias for [[whereNull]]
      */
     andWhereNull(key) {
-        return this.whereNull(key);
+        return this.whereNull(this.resolveKey(key));
     }
     /**
      * Adding `where not null` clause
      */
     whereNotNull(key) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'whereNotNull',
-            args: [this.resolveColumn(key)],
-        });
+        this.knexQuery.whereNotNull(this.resolveKey(key));
         return this;
     }
     /**
      * Adding `or where not null` clause
      */
     orWhereNotNull(key) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'orWhereNotNull',
-            args: [this.resolveColumn(key)],
-        });
+        this.knexQuery.orWhereNotNull(this.resolveKey(key));
         return this;
     }
     /**
      * Alias for [[whereNotNull]]
      */
     andWhereNotNull(key) {
-        return this.whereNotNull(key);
+        return this.whereNotNull(this.resolveKey(key));
     }
     /**
      * Add a `where exists` clause
      */
     whereExists(value) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'whereExists',
-            args: [this.transformValue(value)],
-        });
+        this.knexQuery.whereExists(this.transformValue(value));
         return this;
     }
     /**
      * Add a `or where exists` clause
      */
     orWhereExists(value) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'orWhereExists',
-            args: [this.transformValue(value)],
-        });
+        this.knexQuery.orWhereExists(this.transformValue(value));
         return this;
     }
     /**
@@ -662,22 +459,14 @@ class Chainable extends macroable_1.Macroable {
      * Add a `where not exists` clause
      */
     whereNotExists(value) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'whereNotExists',
-            args: [this.transformValue(value)],
-        });
+        this.knexQuery.whereNotExists(this.transformValue(value));
         return this;
     }
     /**
      * Add a `or where not exists` clause
      */
     orWhereNotExists(value) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'orWhereNotExists',
-            args: [this.transformValue(value)],
-        });
+        this.knexQuery.orWhereNotExists(this.transformValue(value));
         return this;
     }
     /**
@@ -690,22 +479,14 @@ class Chainable extends macroable_1.Macroable {
      * Add where between clause
      */
     whereBetween(key, value) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'whereBetween',
-            args: [this.resolveColumn(key), this.getBetweenPair(value)],
-        });
+        this.knexQuery.whereBetween(this.resolveKey(key), this.getBetweenPair(value));
         return this;
     }
     /**
      * Add where between clause
      */
     orWhereBetween(key, value) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'orWhereBetween',
-            args: [this.resolveColumn(key), this.getBetweenPair(value)],
-        });
+        this.knexQuery.orWhereBetween(this.resolveKey(key), this.getBetweenPair(value));
         return this;
     }
     /**
@@ -718,22 +499,14 @@ class Chainable extends macroable_1.Macroable {
      * Add where between clause
      */
     whereNotBetween(key, value) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'whereNotBetween',
-            args: [this.resolveColumn(key), this.getBetweenPair(value)],
-        });
+        this.knexQuery.whereNotBetween(this.resolveKey(key), this.getBetweenPair(value));
         return this;
     }
     /**
      * Add where between clause
      */
     orWhereNotBetween(key, value) {
-        const whereClauses = this.getRecentStackItem();
-        whereClauses.push({
-            method: 'orWhereNotBetween',
-            args: [this.resolveColumn(key), this.getBetweenPair(value)],
-        });
+        this.knexQuery.orWhereNotBetween(this.resolveKey(key), this.getBetweenPair(value));
         return this;
     }
     /**
@@ -746,21 +519,14 @@ class Chainable extends macroable_1.Macroable {
      * Adding a where clause using raw sql
      */
     whereRaw(sql, bindings) {
-        const whereClauses = this.getRecentStackItem();
         if (bindings) {
             bindings = Array.isArray(bindings)
                 ? bindings.map((binding) => this.transformValue(binding))
                 : bindings;
-            whereClauses.push({
-                method: 'whereRaw',
-                args: [sql, bindings],
-            });
+            this.knexQuery.whereRaw(sql, bindings);
         }
         else {
-            whereClauses.push({
-                method: 'whereRaw',
-                args: [this.transformRaw(sql)],
-            });
+            this.knexQuery.whereRaw(this.transformRaw(sql));
         }
         return this;
     }
@@ -768,21 +534,14 @@ class Chainable extends macroable_1.Macroable {
      * Adding a or where clause using raw sql
      */
     orWhereRaw(sql, bindings) {
-        const whereClauses = this.getRecentStackItem();
         if (bindings) {
             bindings = Array.isArray(bindings)
                 ? bindings.map((binding) => this.transformValue(binding))
                 : bindings;
-            whereClauses.push({
-                method: 'orWhereRaw',
-                args: [sql, bindings],
-            });
+            this.knexQuery.orWhereRaw(sql, bindings);
         }
         else {
-            whereClauses.push({
-                method: 'orWhereRaw',
-                args: [this.transformRaw(sql)],
-            });
+            this.knexQuery.orWhereRaw(this.transformRaw(sql));
         }
         return this;
     }
@@ -932,7 +691,7 @@ class Chainable extends macroable_1.Macroable {
      */
     having(key, operator, value) {
         if (value !== undefined) {
-            this.knexQuery.having(this.resolveColumn(key), operator, this.transformValue(value));
+            this.knexQuery.having(this.resolveKey(key), operator, this.transformValue(value));
             return this;
         }
         if (operator !== undefined) {
@@ -949,7 +708,7 @@ class Chainable extends macroable_1.Macroable {
      */
     orHaving(key, operator, value) {
         if (value !== undefined) {
-            this.knexQuery.orHaving(this.resolveColumn(key), operator, this.transformValue(value));
+            this.knexQuery.orHaving(this.resolveKey(key), operator, this.transformValue(value));
             return this;
         }
         if (operator !== undefined) {
@@ -971,7 +730,7 @@ class Chainable extends macroable_1.Macroable {
         value = Array.isArray(value)
             ? value.map((one) => this.transformValue(one))
             : this.transformValue(value);
-        this.knexQuery.havingIn(this.resolveColumn(key), value);
+        this.knexQuery.havingIn(this.resolveKey(key), value);
         return this;
     }
     /**
@@ -981,7 +740,7 @@ class Chainable extends macroable_1.Macroable {
         value = Array.isArray(value)
             ? value.map((one) => this.transformValue(one))
             : this.transformValue(value);
-        this.knexQuery['orHavingIn'](this.resolveColumn(key), value);
+        this.knexQuery['orHavingIn'](this.resolveKey(key), value);
         return this;
     }
     /**
@@ -997,7 +756,7 @@ class Chainable extends macroable_1.Macroable {
         value = Array.isArray(value)
             ? value.map((one) => this.transformValue(one))
             : this.transformValue(value);
-        this.knexQuery['havingNotIn'](this.resolveColumn(key), value);
+        this.knexQuery['havingNotIn'](this.resolveKey(key), value);
         return this;
     }
     /**
@@ -1007,7 +766,7 @@ class Chainable extends macroable_1.Macroable {
         value = Array.isArray(value)
             ? value.map((one) => this.transformValue(one))
             : this.transformValue(value);
-        this.knexQuery['orHavingNotIn'](this.resolveColumn(key), value);
+        this.knexQuery['orHavingNotIn'](this.resolveKey(key), value);
         return this;
     }
     /**
@@ -1020,14 +779,14 @@ class Chainable extends macroable_1.Macroable {
      * Adding having null clause
      */
     havingNull(key) {
-        this.knexQuery['havingNull'](this.resolveColumn(key));
+        this.knexQuery['havingNull'](this.resolveKey(key));
         return this;
     }
     /**
      * Adding or having null clause
      */
     orHavingNull(key) {
-        this.knexQuery['orHavingNull'](this.resolveColumn(key));
+        this.knexQuery['orHavingNull'](this.resolveKey(key));
         return this;
     }
     /**
@@ -1040,14 +799,14 @@ class Chainable extends macroable_1.Macroable {
      * Adding having not null clause
      */
     havingNotNull(key) {
-        this.knexQuery['havingNotNull'](this.resolveColumn(key));
+        this.knexQuery['havingNotNull'](this.resolveKey(key));
         return this;
     }
     /**
      * Adding or having not null clause
      */
     orHavingNotNull(key) {
-        this.knexQuery['orHavingNotNull'](this.resolveColumn(key));
+        this.knexQuery['orHavingNotNull'](this.resolveKey(key));
         return this;
     }
     /**
@@ -1100,34 +859,34 @@ class Chainable extends macroable_1.Macroable {
      * Adding `having between` clause
      */
     havingBetween(key, value) {
-        this.knexQuery.havingBetween(this.resolveColumn(key), this.getBetweenPair(value));
+        this.knexQuery.havingBetween(this.resolveKey(key), this.getBetweenPair(value));
         return this;
     }
     /**
      * Adding `or having between` clause
      */
     orHavingBetween(key, value) {
-        this.knexQuery.orHavingBetween(this.resolveColumn(key), this.getBetweenPair(value));
+        this.knexQuery.orHavingBetween(this.resolveKey(key), this.getBetweenPair(value));
         return this;
     }
     /**
      * Alias for [[havingBetween]]
      */
     andHavingBetween(key, value) {
-        return this.havingBetween(this.resolveColumn(key), value);
+        return this.havingBetween(this.resolveKey(key), value);
     }
     /**
      * Adding `having not between` clause
      */
     havingNotBetween(key, value) {
-        this.knexQuery.havingNotBetween(this.resolveColumn(key), this.getBetweenPair(value));
+        this.knexQuery.havingNotBetween(this.resolveKey(key), this.getBetweenPair(value));
         return this;
     }
     /**
      * Adding `or having not between` clause
      */
     orHavingNotBetween(key, value) {
-        this.knexQuery.orHavingNotBetween(this.resolveColumn(key), this.getBetweenPair(value));
+        this.knexQuery.orHavingNotBetween(this.resolveKey(key), this.getBetweenPair(value));
         return this;
     }
     /**
@@ -1305,7 +1064,6 @@ class Chainable extends macroable_1.Macroable {
      * Clear where clauses
      */
     clearWhere() {
-        this.whereStack = [[]];
         this.knexQuery.clearWhere();
         return this;
     }
@@ -1371,14 +1129,14 @@ class Chainable extends macroable_1.Macroable {
      * Define `with` CTE
      */
     with(alias, query) {
-        this.knexQuery.with(alias, this.transformValue(query));
+        this.knexQuery.with(alias, query);
         return this;
     }
     /**
      * Define `with` CTE with recursive keyword
      */
     withRecursive(alias, query) {
-        this.knexQuery.withRecursive(alias, this.transformValue(query));
+        this.knexQuery.withRecursive(alias, query);
         return this;
     }
     /**
@@ -1450,14 +1208,6 @@ class Chainable extends macroable_1.Macroable {
     sum(columns, alias) {
         this.hasAggregates = true;
         this.knexQuery.sum(this.normalizeAggregateColumns(columns, alias));
-        return this;
-    }
-    /**
-     * Make use of distinct `sum` aggregate function
-     */
-    sumDistinct(columns, alias) {
-        this.hasAggregates = true;
-        this.knexQuery.sumDistinct(this.normalizeAggregateColumns(columns, alias));
         return this;
     }
     /**

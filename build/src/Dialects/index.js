@@ -12,17 +12,17 @@ exports.dialects = void 0;
 const Pg_1 = require("./Pg");
 const Mysql_1 = require("./Mysql");
 const Mssql_1 = require("./Mssql");
+const Sybase_1 = require("./Sybase");
 const Sqlite_1 = require("./Sqlite");
 const Oracle_1 = require("./Oracle");
 const Redshift_1 = require("./Redshift");
-const Sybase_1 = require("./Sybase");
 exports.dialects = {
     mssql: Mssql_1.MssqlDialect,
+    sybase: Sybase_1.SybaseDialect,
     mysql: Mysql_1.MysqlDialect,
     mysql2: Mysql_1.MysqlDialect,
     oracledb: Oracle_1.OracleDialect,
     postgres: Pg_1.PgDialect,
     redshift: Redshift_1.RedshiftDialect,
     sqlite3: Sqlite_1.SqliteDialect,
-    sybase: Sybase_1.SybaseDialect,
 };

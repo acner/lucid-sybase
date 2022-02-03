@@ -18,60 +18,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = require("path");
-const helpers_1 = require("@poppinss/utils/build/helpers");
+const utils_1 = require("@poppinss/utils");
 const standalone_1 = require("@adonisjs/core/build/standalone");
 class MakeMigration extends standalone_1.BaseCommand {
-    constructor() {
-        super(...arguments);
-        /**
-         * The name of the migration file. We use this to create the migration
-         * file and generate the table name
-         */
-        Object.defineProperty(this, "name", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Choose a custom pre-defined connection. Otherwise, we use the
-         * default connection
-         */
-        Object.defineProperty(this, "connection", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Pre select migration directory. If this is defined, we will ignore the paths
-         * defined inside the config.
-         */
-        Object.defineProperty(this, "folder", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Custom table name for creating a new table
-         */
-        Object.defineProperty(this, "create", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Custom table name for altering an existing table
-         */
-        Object.defineProperty(this, "table", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-    }
     /**
      * Returns the directory for creating the migration file
      */
@@ -118,7 +67,7 @@ class MakeMigration extends standalone_1.BaseCommand {
         /**
          * Template stub
          */
-        const stub = (0, path_1.join)(__dirname, '..', 'templates', this.table ? 'migration-alter.txt' : 'migration-make.txt');
+        const stub = path_1.join(__dirname, '..', 'templates', this.table ? 'migration-alter.txt' : 'migration-make.txt');
         /**
          * Prepend timestamp to keep schema files in the order they
          * have been created
@@ -133,51 +82,34 @@ class MakeMigration extends standalone_1.BaseCommand {
             .apply({
             toClassName() {
                 return function (filename, render) {
-                    const migrationClassName = helpers_1.string.camelCase(tableName || render(filename).replace(prefix, ''));
+                    const migrationClassName = utils_1.lodash.camelCase(tableName || render(filename).replace(prefix, ''));
                     return `${migrationClassName.charAt(0).toUpperCase()}${migrationClassName.slice(1)}`;
                 };
             },
             toTableName() {
                 return function (filename, render) {
-                    return tableName || helpers_1.string.snakeCase(render(filename).replace(prefix, ''));
+                    return tableName || utils_1.lodash.snakeCase(render(filename).replace(prefix, ''));
                 };
             },
         });
         await this.generator.run();
     }
 }
-Object.defineProperty(MakeMigration, "commandName", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'make:migration'
-});
-Object.defineProperty(MakeMigration, "description", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'Make a new migration file'
-});
+MakeMigration.commandName = 'make:migration';
+MakeMigration.description = 'Make a new migration file';
 /**
  * This command loads the application, since we need the runtime
  * to find the migration directories for a given connection
  */
-Object.defineProperty(MakeMigration, "settings", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {
-        loadApp: true,
-    }
-});
+MakeMigration.settings = {
+    loadApp: true,
+};
 __decorate([
     standalone_1.args.string({ description: 'Name of the migration file' }),
     __metadata("design:type", String)
 ], MakeMigration.prototype, "name", void 0);
 __decorate([
-    standalone_1.flags.string({
-        description: 'The connection flag is used to lookup the directory for the migration file',
-    }),
+    standalone_1.flags.string({ description: 'Define a custom database connection for the migration' }),
     __metadata("design:type", String)
 ], MakeMigration.prototype, "connection", void 0);
 __decorate([

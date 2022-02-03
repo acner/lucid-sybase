@@ -1,9 +1,11 @@
 /// <reference types="@adonisjs/profiler/build/adonis-typings/profiler" />
-declare module '@ioc:Adonis/Lucid/Orm' {
+declare module '@ioc:Adonis/Lucid/Model' {
     import { DateTime } from 'luxon';
     import { Hooks } from '@poppinss/hooks';
     import { ProfilerContract, ProfilerRowContract } from '@ioc:Adonis/Core/Profiler';
-    import { Update, Counter, OneOrMany, Aggregate, Returning, DialectContract, ChainableContract, QueryClientContract, SimplePaginatorMetaKeys, SimplePaginatorContract, TransactionClientContract, ExcutableQueryBuilderContract } from '@ioc:Adonis/Lucid/Database';
+    import { Update, Counter, OneOrMany, Aggregate, ChainableContract, SimplePaginatorContract, ExcutableQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+    import { DialectContract, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+    import { Has, Preload, WhereHas, WithCount, ModelRelations, RelationOptions, PreloaderContract, ModelRelationTypes, RelationshipsContract, ExtractModelRelations, ThroughRelationOptions, ManyToManyRelationOptions } from '@ioc:Adonis/Lucid/Relations';
     /**
      * ------------------------------------------------------
      *  Helpers
@@ -49,7 +51,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Extract the query scopes of a model
      */
-    type ExtractScopes<Model> = {
+    type ExtractScopes<Model extends any> = {
         [Scope in keyof PickProperties<Model, QueryScope<QueryScopeCallback>>]: (...args: OmitFirst<Model[Scope]>) => ExtractScopes<Model>;
     };
     /**
@@ -86,7 +88,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      * List of events for which a model will trigger hooks
      */
     type EventsList = 'save' | 'create' | 'update' | 'delete' | 'fetch' | 'find' | 'paginate';
-    type HooksHandler<Data, Event extends EventsList> = ((data: Data, event: Event) => Promise<void> | void) | string;
+    type HooksHandler<Data extends any, Event extends EventsList> = ((data: Data, event: Event) => Promise<void> | void) | string;
     /**
      * ------------------------------------------------------
      * Query Scope
@@ -194,41 +196,10 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         client?: QueryClientContract;
     };
     /**
-     * Options used by the method that internally invokes
-     * the merge method.
-  ]   */
-    type ModelAssignOptions = ModelAdapterOptions & {
-        allowExtraProperties?: boolean;
-    };
-    /**
      * Preload function on a model instance
      */
     interface LucidRowPreload<Model extends LucidRow> extends Preload<Model, Promise<void>> {
         (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>;
-    }
-    interface LucidRowAggregate<Model extends LucidRow> extends Preload<Model, Promise<void>> {
-        (callback: (preloader: PreloaderContract<Model>) => void): Promise<void>;
-    }
-    /**
-     * An extension of the simple paginator with support for serializing models
-     */
-    interface ModelPaginatorContract<Result extends LucidRow> extends Omit<SimplePaginatorContract<Result>, 'toJSON'> {
-        serialize(cherryPick?: CherryPick): {
-            meta: any;
-            data: ModelObject[];
-        };
-        toJSON(): {
-            meta: any;
-            data: ModelObject[];
-        };
-    }
-    /**
-     * Lazy load aggregates for a given model instance
-     */
-    interface LazyLoadAggregatesContract<Model extends LucidRow> extends Promise<void> {
-        loadAggregate: WithAggregate<Model, this>;
-        loadCount: WithCount<Model, this>;
-        exec(): Promise<void>;
     }
     /**
      * ------------------------------------------------------
@@ -238,30 +209,17 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Model query builder will have extras methods on top of the Database query builder
      */
-    interface ModelQueryBuilderContract<Model extends LucidModel, Result = InstanceType<Model>> extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
+    interface ModelQueryBuilderContract<Model extends LucidModel, Result extends any = InstanceType<Model>> extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
         model: Model;
-        returning: Returning<this>;
-        /**
-         * Define a callback to transform a row
-         */
-        rowTransformer(callback: (row: LucidRow) => void): this;
-        /**
-         * Define a custom preloader for the current query
-         */
-        usePreloader(preloader: PreloaderContract<LucidRow>): this;
         /**
          * Whether or not the query is a child query generated for `.where`
          * callbacks
          */
         isChildQuery: boolean;
         /**
-         * Alias for the @withScopes method
+         * Apply user defined query scopes
          */
         apply<Scopes extends ExtractScopes<Model>>(callback: (scopes: Scopes) => void): this;
-        /**
-         * Apply model query scopes on the query bulder
-         */
-        withScopes<Scopes extends ExtractScopes<Model>>(callback: (scopes: Scopes) => void): this;
         /**
          * A copy of client options.
          */
@@ -291,31 +249,22 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Perform delete operation
          */
-        del(returning?: OneOrMany<string>): ModelQueryBuilderContract<Model, any>;
-        delete(returning?: OneOrMany<string>): ModelQueryBuilderContract<Model, any>;
-        /**
-         * A shorthand to define limit and offset based upon the
-         * current page
-         */
-        forPage(page: number, perPage?: number): this;
+        del(): ModelQueryBuilderContract<Model, number>;
+        delete(): ModelQueryBuilderContract<Model, number>;
         /**
          * Execute query with pagination
          */
-        paginate(page: number, perPage?: number): Promise<Result extends LucidRow ? ModelPaginatorContract<Result> : SimplePaginatorContract<Result>>;
+        paginate(page: number, perPage?: number): Promise<SimplePaginatorContract<Result>>;
         /**
          * Mutations (update and increment can be one query aswell)
          */
-        update: Update<ModelQueryBuilderContract<Model, any>>;
-        increment: Counter<ModelQueryBuilderContract<Model, any>>;
-        decrement: Counter<ModelQueryBuilderContract<Model, any>>;
+        update: Update<ModelQueryBuilderContract<Model, number>>;
+        increment: Counter<ModelQueryBuilderContract<Model, number>>;
+        decrement: Counter<ModelQueryBuilderContract<Model, number>>;
         /**
          * Fetch relationship count
          */
         withCount: WithCount<InstanceType<Model>, this>;
-        /**
-         * Fetch aggregate value for a given relationship
-         */
-        withAggregate: WithAggregate<InstanceType<Model>, this>;
         /**
          * Add where constraint using the relationship
          */
@@ -341,14 +290,13 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Aggregates
          */
-        count: Aggregate<this>;
-        countDistinct: Aggregate<this>;
-        min: Aggregate<this>;
-        max: Aggregate<this>;
-        sum: Aggregate<this>;
-        sumDistinct: Aggregate<this>;
-        avg: Aggregate<this>;
-        avgDistinct: Aggregate<this>;
+        count: Aggregate<ModelQueryBuilderContract<Model, any>>;
+        countDistinct: Aggregate<ModelQueryBuilderContract<Model, any>>;
+        min: Aggregate<ModelQueryBuilderContract<Model, any>>;
+        max: Aggregate<ModelQueryBuilderContract<Model, any>>;
+        sum: Aggregate<ModelQueryBuilderContract<Model, any>>;
+        avg: Aggregate<ModelQueryBuilderContract<Model, any>>;
+        avgDistinct: Aggregate<ModelQueryBuilderContract<Model, any>>;
         /**
          * Executes the callback when dialect matches one of the mentioned
          * dialects
@@ -359,11 +307,6 @@ declare module '@ioc:Adonis/Lucid/Orm' {
          * dialects
          */
         unlessDialect(dialect: DialectContract['name'] | DialectContract['name'][], matchCallback: (query: this) => any, noMatchCallback?: (query: this) => any): this;
-        /**
-         * Get rows back as a plain javascript object and not an array
-         * of model instances
-         */
-        pojo<T>(): ModelQueryBuilderContract<Model, T>;
     }
     /**
      * Shape of model keys
@@ -421,7 +364,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
          * custom queries.
          */
         $getQueryFor(action: 'insert', client: QueryClientContract): ReturnType<QueryClientContract['insertQuery']>;
-        $getQueryFor(action: 'update' | 'delete' | 'refresh', client: QueryClientContract): ModelQueryBuilderContract<LucidModel>;
+        $getQueryFor(action: 'update' | 'delete', client: QueryClientContract): ReturnType<QueryClientContract['query']>;
         /**
          * Read/write attributes. Following methods are intentionally loosely typed,
          * so that one can bypass the public facing API and type checking for
@@ -436,39 +379,21 @@ declare module '@ioc:Adonis/Lucid/Orm' {
          * advanced use cases
          */
         $hasRelated(key: string): boolean;
-        $setRelated(key: string, result: OneOrMany<LucidRow> | null): void;
-        $pushRelated(key: string, result: OneOrMany<LucidRow> | null): void;
-        $getRelated(key: string, defaultValue?: any): OneOrMany<LucidRow> | undefined | null;
+        $setRelated(key: string, result: OneOrMany<LucidRow>): void;
+        $pushRelated(key: string, result: OneOrMany<LucidRow>): void;
+        $getRelated(key: string, defaultValue?: any): OneOrMany<LucidRow> | undefined;
         /**
          * Consume the adapter result and hydrate the model
          */
         $consumeAdapterResult(adapterResult: ModelObject, sideloadAttributes?: ModelObject): void;
         $hydrateOriginals(): void;
-        fill(value: Partial<ModelAttributes<this>>, allowExtraProperties?: boolean): this;
-        merge(value: Partial<ModelAttributes<this>>, allowExtraProperties?: boolean): this;
-        /**
-         * Actions to perform on the instance
-         */
+        fill(value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): this;
+        merge(value: Partial<ModelAttributes<this>>, allowNonExtraProperties?: boolean): this;
         save(): Promise<this>;
         delete(): Promise<void>;
         refresh(): Promise<this>;
-        /**
-         * Load relationships onto the instance
-         */
         load: LucidRowPreload<this>;
-        /**
-         * Alias for "load"
-         * @deprecated
-         */
         preload: LucidRowPreload<this>;
-        /**
-         * Load aggregates
-         */
-        loadAggregate: <Self extends this, Name extends ExtractModelRelations<Self>, RelatedBuilder = Self[Name] extends ModelRelations ? Self[Name]['subQuery'] : never>(name: Name, callback: (builder: RelatedBuilder) => void) => LazyLoadAggregatesContract<Self>;
-        /**
-         * Load count
-         */
-        loadCount: <Self extends this, Name extends ExtractModelRelations<Self>, RelatedBuilder = Self[Name] extends ModelRelations ? Self[Name]['subQuery'] : never>(name: Name, callback?: (builder: RelatedBuilder) => void) => LazyLoadAggregatesContract<Self>;
         /**
          * Serialize attributes to a plain object
          */
@@ -547,10 +472,6 @@ declare module '@ioc:Adonis/Lucid/Orm' {
          */
         connection?: string;
         /**
-         * Naming strategy to use
-         */
-        namingStrategy: NamingStrategyContract;
-        /**
          * Database table to use
          */
         table: string;
@@ -567,6 +488,10 @@ declare module '@ioc:Adonis/Lucid/Orm' {
          * Reference to hooks
          */
         $hooks: Hooks;
+        /**
+         * Used to construct defaults for the model
+         */
+        $configurator: OrmConfig;
         /**
          * A copy of internal keys mapping. One should be able to resolve between
          * all key versions
@@ -611,16 +536,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Get relationship declaration
          */
-        $getRelation<Model extends LucidModel, Name extends ExtractModelRelations<InstanceType<Model>>>(this: Model, name: Name): InstanceType<Model>[Name] extends ModelRelations ? InstanceType<Model>[Name]['client']['relation'] : RelationshipsContract;
-        $getRelation<Model extends LucidModel>(this: Model, name: string): RelationshipsContract;
-        /**
-         * Define a static property on the model using the inherit or
-         * define strategy.
-         *
-         * Inherit strategy will clone the property from the parent model
-         * and will set it on the current model
-         */
-        $defineProperty<Model extends LucidModel, Prop extends keyof Model>(this: Model, propertyName: Prop, defaultValue: Model[Prop], strategy: 'inherit' | 'define' | ((value: Model[Prop]) => Model[Prop])): void;
+        $getRelation<Model extends LucidModel, Name extends ExtractModelRelations<InstanceType<Model>>>(this: Model, name: Name | string): (InstanceType<Model>[Name] extends ModelRelations ? InstanceType<Model>[Name]['client']['relation'] : RelationshipsContract) | undefined;
         /**
          * Boot model
          */
@@ -638,16 +554,16 @@ declare module '@ioc:Adonis/Lucid/Orm' {
          * Register an after hook
          */
         after<Model extends LucidModel>(this: Model, event: 'fetch', handler: HooksHandler<InstanceType<Model>[], 'fetch'>): void;
-        after<Model extends LucidModel>(this: Model, event: 'paginate', handler: HooksHandler<ModelPaginatorContract<InstanceType<Model>>, 'paginate'>): void;
+        after<Model extends LucidModel>(this: Model, event: 'paginate', handler: HooksHandler<SimplePaginatorContract<InstanceType<Model>>, 'paginate'>): void;
         after<Model extends LucidModel, Event extends EventsList>(this: Model, event: Event, handler: HooksHandler<InstanceType<Model>, Event>): void;
         /**
          * Create model and return its instance back
          */
-        create<T extends LucidModel>(this: T, values: Partial<ModelAttributes<InstanceType<T>>>, options?: ModelAssignOptions): Promise<InstanceType<T>>;
+        create<T extends LucidModel>(this: T, values: Partial<ModelAttributes<InstanceType<T>>>, options?: ModelAdapterOptions): Promise<InstanceType<T>>;
         /**
          * Create many of model instances
          */
-        createMany<T extends LucidModel>(this: T, values: Partial<ModelAttributes<InstanceType<T>>>[], options?: ModelAssignOptions): Promise<InstanceType<T>[]>;
+        createMany<T extends LucidModel>(this: T, values: Partial<ModelAttributes<InstanceType<T>>>[], options?: ModelAdapterOptions): Promise<InstanceType<T>[]>;
         /**
          * Find one using the primary key
          */
@@ -680,29 +596,29 @@ declare module '@ioc:Adonis/Lucid/Orm' {
          * Returns the first row or create a new instance of model without
          * persisting it
          */
-        firstOrNew<T extends LucidModel>(this: T, searchPayload: Partial<ModelAttributes<InstanceType<T>>>, savePayload?: Partial<ModelAttributes<InstanceType<T>>>, options?: ModelAssignOptions): Promise<InstanceType<T>>;
+        firstOrNew<T extends LucidModel>(this: T, searchPayload: Partial<ModelAttributes<InstanceType<T>>>, savePayload?: Partial<ModelAttributes<InstanceType<T>>>, options?: ModelAdapterOptions): Promise<InstanceType<T>>;
         /**
          * Returns the first row or save it to the database
          */
-        firstOrCreate<T extends LucidModel>(this: T, searchPayload: Partial<ModelAttributes<InstanceType<T>>>, savePayload?: Partial<ModelAttributes<InstanceType<T>>>, options?: ModelAssignOptions): Promise<InstanceType<T>>;
+        firstOrCreate<T extends LucidModel>(this: T, searchPayload: Partial<ModelAttributes<InstanceType<T>>>, savePayload?: Partial<ModelAttributes<InstanceType<T>>>, options?: ModelAdapterOptions): Promise<InstanceType<T>>;
         /**
          * Returns the first row or save it to the database
          */
-        updateOrCreate<T extends LucidModel>(this: T, searchPayload: Partial<ModelAttributes<InstanceType<T>>>, updatePayload: Partial<ModelAttributes<InstanceType<T>>>, options?: ModelAssignOptions): Promise<InstanceType<T>>;
+        updateOrCreate<T extends LucidModel>(this: T, searchPayload: Partial<ModelAttributes<InstanceType<T>>>, updatePayload: Partial<ModelAttributes<InstanceType<T>>>, options?: ModelAdapterOptions): Promise<InstanceType<T>>;
         /**
          * Find rows or create in-memory instances of the missing
          * one's.
          */
-        fetchOrNewUpMany<T extends LucidModel>(this: T, predicate: keyof ModelAttributes<InstanceType<T>> | (keyof ModelAttributes<InstanceType<T>>)[], payload: Partial<ModelAttributes<InstanceType<T>>>[], options?: ModelAssignOptions): Promise<InstanceType<T>[]>;
+        fetchOrNewUpMany<T extends LucidModel>(this: T, predicate: keyof ModelAttributes<InstanceType<T>> | (keyof ModelAttributes<InstanceType<T>>)[], payload: Partial<ModelAttributes<InstanceType<T>>>[], options?: ModelAdapterOptions): Promise<InstanceType<T>[]>;
         /**
          * Find rows or create many when missing. One db call is invoked
          * for each create
          */
-        fetchOrCreateMany<T extends LucidModel>(this: T, predicate: keyof ModelAttributes<InstanceType<T>> | (keyof ModelAttributes<InstanceType<T>>)[], payload: Partial<ModelAttributes<InstanceType<T>>>[], options?: ModelAssignOptions): Promise<InstanceType<T>[]>;
+        fetchOrCreateMany<T extends LucidModel>(this: T, predicate: keyof ModelAttributes<InstanceType<T>> | (keyof ModelAttributes<InstanceType<T>>)[], payload: Partial<ModelAttributes<InstanceType<T>>>[], options?: ModelAdapterOptions): Promise<InstanceType<T>[]>;
         /**
          * Update existing rows or create new one's.
          */
-        updateOrCreateMany<T extends LucidModel>(this: T, predicate: keyof ModelAttributes<InstanceType<T>> | (keyof ModelAttributes<InstanceType<T>>)[], payload: Partial<ModelAttributes<InstanceType<T>>>[], options?: ModelAssignOptions): Promise<InstanceType<T>[]>;
+        updateOrCreateMany<T extends LucidModel>(this: T, predicate: keyof ModelAttributes<InstanceType<T>> | (keyof ModelAttributes<InstanceType<T>>)[], payload: Partial<ModelAttributes<InstanceType<T>>>[], options?: ModelAdapterOptions): Promise<InstanceType<T>[]>;
         /**
          * Fetch all rows
          */
@@ -710,7 +626,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Returns the query for fetching a model instance
          */
-        query<Model extends LucidModel, Result = InstanceType<Model>>(this: Model, options?: ModelAdapterOptions): ModelQueryBuilderContract<Model, Result>;
+        query<Model extends LucidModel, Result extends any = InstanceType<Model>>(this: Model, options?: ModelAdapterOptions): ModelQueryBuilderContract<Model, Result>;
         /**
          * Truncate model table
          */
@@ -739,11 +655,6 @@ declare module '@ioc:Adonis/Lucid/Orm' {
          */
         delete(instance: LucidRow): Promise<void>;
         /**
-         * Refresh model instance to reflect new values
-         * from the database
-         */
-        refresh(instance: LucidRow): Promise<void>;
-        /**
          * Perform insert
          */
         insert(instance: LucidRow, attributes: ModelObject): Promise<void>;
@@ -757,40 +668,37 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         query(modelConstructor: LucidModel, options?: ModelAdapterOptions): ModelQueryBuilderContract<LucidModel, LucidRow>;
     }
     /**
-     * Naming strategy for model
+     * Shape of ORM config to have a standard place for computing
+     * defaults
      */
-    interface NamingStrategyContract {
+    type OrmConfig = {
         /**
-         * The default table name for the given model
+         * Return the default table name for a given model
          */
-        tableName(model: LucidModel): string;
+        getTableName(model: LucidModel): string;
         /**
-         * The database column name for a given model attribute
+         * Return the `columnName` for a given model
          */
-        columnName(model: LucidModel, attributeName: string): string;
+        getColumnName(model: LucidModel, key: string): string;
         /**
-         * The post serialization name for a given model attribute
+         * Return the `serializeAs` key for a given model property
          */
-        serializedName(model: LucidModel, attributeName: string): string;
+        getSerializeAsKey(model: LucidModel, key: string): string;
         /**
-         * The local key for a given model relationship
+         * Return the local key property name for a given relationship
          */
-        relationLocalKey(relation: ModelRelations['__opaque_type'], model: LucidModel, relatedModel: LucidModel, relationName: string): string;
+        getLocalKey(relation: ModelRelations['__opaque_type'], model: LucidModel, relatedModel: LucidModel): string;
         /**
-         * The foreign key for a given model relationship
+         * Return the foreign key property name for a given relationship
          */
-        relationForeignKey(relation: ModelRelations['__opaque_type'], model: LucidModel, relatedModel: LucidModel, relationName: string): string;
+        getForeignKey(relation: ModelRelations['__opaque_type'], model: LucidModel, relatedModel: LucidModel): string;
         /**
-         * Pivot table name for many to many relationship
+         * Return the pivot table name for many to many relationship
          */
-        relationPivotTable(relation: 'manyToMany', model: LucidModel, relatedModel: LucidModel, relationName: string): string;
+        getPivotTableName(relation: 'manyToMany', model: LucidModel, relatedModel: LucidModel, relationName: string): string;
         /**
-         * Pivot foreign key for many to many relationship
+         * Return the pivot foreign key for many to many relationship
          */
-        relationPivotForeignKey(relation: 'manyToMany', model: LucidModel, relatedModel: LucidModel, relationName: string): string;
-        /**
-         * Keys for the pagination meta
-         */
-        paginationMetaKeys(): SimplePaginatorMetaKeys;
-    }
+        getPivotForeignKey(relation: 'manyToMany', model: LucidModel, relatedModel: LucidModel, relationName: string): string;
+    };
 }

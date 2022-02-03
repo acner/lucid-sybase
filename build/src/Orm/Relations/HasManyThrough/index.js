@@ -17,129 +17,18 @@ const utils_1 = require("../../../utils");
  */
 class HasManyThrough {
     constructor(relationName, relatedModel, options, model) {
-        Object.defineProperty(this, "relationName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relationName
-        });
-        Object.defineProperty(this, "relatedModel", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relatedModel
-        });
-        Object.defineProperty(this, "options", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: options
-        });
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: model
-        });
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 'hasManyThrough'
-        });
-        Object.defineProperty(this, "booted", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "serializeAs", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs
-        });
-        Object.defineProperty(this, "throughModel", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.options.throughModel
-        });
-        /**
-         * Available after boot is invoked
-         */
-        Object.defineProperty(this, "localKey", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "localKeyColumnName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * This exists on the through model
-         */
-        Object.defineProperty(this, "foreignKey", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "foreignKeyColumnName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * This exists on the through model
-         */
-        Object.defineProperty(this, "throughLocalKey", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "throughLocalKeyColumnName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * This exists on the related model
-         */
-        Object.defineProperty(this, "throughForeignKey", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "throughForeignKeyColumnName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.relationName = relationName;
+        this.relatedModel = relatedModel;
+        this.options = options;
+        this.model = model;
+        this.type = 'hasManyThrough';
+        this.booted = false;
+        this.serializeAs = this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs;
+        this.throughModel = this.options.throughModel;
         /**
          * Reference to the onQuery hook defined by the user
          */
-        Object.defineProperty(this, "onQueryHook", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.options.onQuery
-        });
-    }
-    /**
-     * Clone relationship instance
-     */
-    clone(parent) {
-        return new HasManyThrough(this.relationName, this.relatedModel, { ...this.options }, parent);
+        this.onQueryHook = this.options.onQuery;
     }
     /**
      * Returns the alias for the through key
@@ -164,22 +53,22 @@ class HasManyThrough {
             localKey: {
                 model: this.model,
                 key: this.options.localKey ||
-                    this.model.namingStrategy.relationLocalKey(this.type, this.model, this.relatedModel(), this.relationName),
+                    this.model.$configurator.getLocalKey(this.type, this.model, this.relatedModel()),
             },
             foreignKey: {
                 model: this.throughModel(),
                 key: this.options.foreignKey ||
-                    this.model.namingStrategy.relationForeignKey(this.type, this.model, this.throughModel(), this.relationName),
+                    this.model.$configurator.getForeignKey(this.type, this.model, this.throughModel()),
             },
             throughLocalKey: {
                 model: this.throughModel(),
                 key: this.options.throughLocalKey ||
-                    this.model.namingStrategy.relationLocalKey(this.type, this.throughModel(), this.relatedModel(), this.relationName),
+                    this.model.$configurator.getLocalKey(this.type, this.throughModel(), this.relatedModel()),
             },
             throughForeignKey: {
                 model: this.relatedModel(),
                 key: this.options.throughForeignKey ||
-                    this.model.namingStrategy.relationForeignKey(this.type, this.throughModel(), this.relatedModel(), this.relationName),
+                    this.model.$configurator.getForeignKey(this.type, this.throughModel(), this.relatedModel()),
             },
         }).extract();
         /**
@@ -205,14 +94,14 @@ class HasManyThrough {
      * Set related model instances
      */
     setRelated(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         parent.$setRelated(this.relationName, related);
     }
     /**
      * Push related model instance(s)
      */
     pushRelated(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         parent.$pushRelated(this.relationName, related);
     }
     /**
@@ -220,7 +109,7 @@ class HasManyThrough {
      * models.
      */
     setRelatedForMany(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         const $foreignCastAsKeyAlias = this.throughAlias(this.foreignKeyColumnName);
         parent.forEach((parentModel) => {
             this.setRelated(parentModel, related.filter((relatedModel) => {
@@ -233,21 +122,21 @@ class HasManyThrough {
      * Returns an instance of query client for invoking queries
      */
     client(parent, client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return new QueryClient_1.HasManyThroughClient(this, parent, client);
     }
     /**
      * Returns instance of the eager query
      */
     eagerQuery(parent, client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return QueryClient_1.HasManyThroughClient.eagerQuery(client, this, parent);
     }
     /**
      * Returns instance of query builder
      */
     subQuery(client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return QueryClient_1.HasManyThroughClient.subQuery(client, this);
     }
 }

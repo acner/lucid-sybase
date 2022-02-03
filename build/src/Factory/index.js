@@ -15,18 +15,8 @@ const FactoryModel_1 = require("./FactoryModel");
  */
 class FactoryManager {
     constructor() {
-        Object.defineProperty(this, "stubCounter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 1
-        });
-        Object.defineProperty(this, "stubIdCallback", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: (counter) => counter
-        });
+        this.stubCounter = 1;
+        this.stubIdCallback = (counter) => counter;
     }
     /**
      * Returns the next id

@@ -16,12 +16,7 @@ const Base_1 = require("./Base");
 class HasMany extends Base_1.BaseRelation {
     constructor(relation, factory) {
         super(factory);
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
+        this.relation = relation;
         this.relation.boot();
     }
     /**

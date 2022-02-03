@@ -1,6 +1,7 @@
-import { Knex } from 'knex';
+import knex from 'knex';
+import { LucidModel } from '@ioc:Adonis/Lucid/Model';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidModel, RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+import { RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations';
 import { HasManyThrough } from './index';
 import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder';
 /**
@@ -23,7 +24,7 @@ export declare class HasManyThroughSubQueryBuilder extends BaseSubQueryBuilder i
      */
     private throughTable;
     private hasSelfRelation;
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, relation: HasManyThrough);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, relation: HasManyThrough);
     /**
      * Prefixes the through table name to a column
      */

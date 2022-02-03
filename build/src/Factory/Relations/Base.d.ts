@@ -1,5 +1,5 @@
 /// <reference path="../../../adonis-typings/factory.d.ts" />
-import { LucidModel } from '@ioc:Adonis/Lucid/Orm';
+import { LucidModel } from '@ioc:Adonis/Lucid/Model';
 import { RelationCallback, FactoryModelContract, FactoryContextContract, FactoryBuilderQueryContract } from '@ioc:Adonis/Lucid/Factory';
 /**
  * Base relation to be extended by other factory relations

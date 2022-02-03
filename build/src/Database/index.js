@@ -9,8 +9,6 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Database = void 0;
-/// <reference path="../../adonis-typings/index.ts" />
-const macroable_1 = require("macroable");
 const utils_1 = require("@poppinss/utils");
 const QueryClient_1 = require("../QueryClient");
 const Raw_1 = require("./StaticBuilder/Raw");
@@ -25,110 +23,30 @@ const Database_1 = require("./QueryBuilder/Database");
  * Database class exposes the API to manage multiple connections and obtain an instance
  * of query/transaction clients.
  */
-class Database extends macroable_1.Macroable {
+class Database {
     constructor(config, logger, profiler, emitter) {
-        super();
-        Object.defineProperty(this, "config", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: config
-        });
-        Object.defineProperty(this, "logger", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: logger
-        });
-        Object.defineProperty(this, "profiler", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: profiler
-        });
-        Object.defineProperty(this, "emitter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: emitter
-        });
-        /**
-         * Reference to self constructor. TypeScript sucks with "this.constructor"
-         * https://github.com/microsoft/TypeScript/issues/4586
-         */
-        Object.defineProperty(this, "Database", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: Database
-        });
-        /**
-         * Reference to connections manager
-         */
-        Object.defineProperty(this, "manager", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.config = config;
+        this.logger = logger;
+        this.profiler = profiler;
+        this.emitter = emitter;
         /**
          * Primary connection name
          */
-        Object.defineProperty(this, "primaryConnectionName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.config.connection
-        });
+        this.primaryConnectionName = this.config.connection;
         /**
          * Reference to query builders. We expose them, so that they can be
          * extended from outside using macros.
          */
-        Object.defineProperty(this, "DatabaseQueryBuilder", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: Database_1.DatabaseQueryBuilder
-        });
-        Object.defineProperty(this, "InsertQueryBuilder", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: Insert_1.InsertQueryBuilder
-        });
-        Object.defineProperty(this, "ModelQueryBuilder", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: QueryBuilder_1.ModelQueryBuilder
-        });
-        Object.defineProperty(this, "SimplePaginator", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: SimplePaginator_1.SimplePaginator
-        });
+        this.DatabaseQueryBuilder = Database_1.DatabaseQueryBuilder;
+        this.InsertQueryBuilder = Insert_1.InsertQueryBuilder;
+        this.ModelQueryBuilder = QueryBuilder_1.ModelQueryBuilder;
+        this.SimplePaginator = SimplePaginator_1.SimplePaginator;
         /**
          * A store of global transactions
          */
-        Object.defineProperty(this, "connectionGlobalTransactions", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Map()
-        });
-        Object.defineProperty(this, "hasHealthChecksEnabled", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "prettyPrint", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: prettyPrint_1.prettyPrint
-        });
+        this.connectionGlobalTransactions = new Map();
+        this.hasHealthChecksEnabled = false;
+        this.prettyPrint = prettyPrint_1.prettyPrint;
         this.validateConfig();
         this.manager = new Manager_1.ConnectionManager(this.logger, this.emitter);
         this.registerConnections();
@@ -272,7 +190,7 @@ class Database extends macroable_1.Macroable {
      * Returns reference builder.
      */
     ref(reference) {
-        return new Reference_1.ReferenceBuilder(reference, this.connection().getReadClient().client);
+        return new Reference_1.ReferenceBuilder(reference);
     }
     /**
      * Returns instance of a query builder and selects the table
@@ -290,11 +208,8 @@ class Database extends macroable_1.Macroable {
      * Returns a transaction instance on the default
      * connection
      */
-    transaction(callback, options) {
-        const client = this.connection();
-        return typeof callback === 'function'
-            ? client.transaction(callback, options)
-            : client.transaction(callback);
+    transaction(callback) {
+        return this.connection().transaction(callback);
     }
     /**
      * Invokes `manager.report`
@@ -361,18 +276,3 @@ class Database extends macroable_1.Macroable {
     }
 }
 exports.Database = Database;
-/**
- * Required by macroable
- */
-Object.defineProperty(Database, "macros", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});
-Object.defineProperty(Database, "getters", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});

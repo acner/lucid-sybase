@@ -1,4 +1,4 @@
-import { LucidModel } from '@ioc:Adonis/Lucid/Orm';
+import { LucidModel } from '@ioc:Adonis/Lucid/Model';
 /**
  * Utility to consistently extract relationship keys from the model
  * and the relation model.

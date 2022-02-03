@@ -13,22 +13,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 class DatabaseServiceProvider {
     constructor(app) {
-        Object.defineProperty(this, "app", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: app
-        });
+        this.app = app;
     }
     /**
      * Register the database binding
      */
     registerDatabase() {
         this.app.container.singleton('Adonis/Lucid/Database', () => {
-            const config = this.app.container.resolveBinding('Adonis/Core/Config').get('database', {});
-            const Logger = this.app.container.resolveBinding('Adonis/Core/Logger');
-            const Profiler = this.app.container.resolveBinding('Adonis/Core/Profiler');
-            const Emitter = this.app.container.resolveBinding('Adonis/Core/Event');
+            const config = this.app.container.use('Adonis/Core/Config').get('database', {});
+            const Logger = this.app.container.use('Adonis/Core/Logger');
+            const Profiler = this.app.container.use('Adonis/Core/Profiler');
+            const Emitter = this.app.container.use('Adonis/Core/Event');
             const { Database } = require('../src/Database');
             return new Database(config, Logger, Profiler, Emitter);
         });
@@ -38,22 +33,21 @@ class DatabaseServiceProvider {
      */
     registerOrm() {
         this.app.container.singleton('Adonis/Lucid/Orm', () => {
+            const Config = this.app.container.use('Adonis/Core/Config');
             const { Adapter } = require('../src/Orm/Adapter');
             const { scope } = require('../src/Helpers/scope');
             const decorators = require('../src/Orm/Decorators');
             const { BaseModel } = require('../src/Orm/BaseModel');
-            const { ModelPaginator } = require('../src/Orm/Paginator');
-            const { SnakeCaseNamingStrategy } = require('../src/Orm/NamingStrategies/SnakeCase');
+            const ormConfig = require('../src/Orm/Config').Config;
             /**
              * Attaching adapter to the base model. Each model is allowed to define
              * a different adapter.
              */
-            BaseModel.$adapter = new Adapter(this.app.container.resolveBinding('Adonis/Lucid/Database'));
+            BaseModel.$adapter = new Adapter(this.app.container.use('Adonis/Lucid/Database'));
             BaseModel.$container = this.app.container;
+            BaseModel.$configurator = Object.assign({}, ormConfig, Config.get('database.orm', {}));
             return {
                 BaseModel,
-                ModelPaginator,
-                SnakeCaseNamingStrategy,
                 scope,
                 ...decorators,
             };
@@ -96,19 +90,10 @@ class DatabaseServiceProvider {
         if (this.app.environment === 'repl') {
             return;
         }
-        this.app.container.withBindings(['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'], (HealthCheck, Db) => {
+        this.app.container.with(['Adonis/Core/HealthCheck', 'Adonis/Lucid/Database'], (HealthCheck, Db) => {
             if (Db.hasHealthChecksEnabled) {
                 HealthCheck.addChecker('lucid', 'Adonis/Lucid/Database');
             }
-        });
-    }
-    /**
-     * Register the migrator used for database migration
-     */
-    registerMigrator() {
-        this.app.container.bind('Adonis/Lucid/Migrator', () => {
-            const { Migrator } = require('../src/Migrator');
-            return Migrator;
         });
     }
     /**
@@ -121,9 +106,9 @@ class DatabaseServiceProvider {
         if (this.app.environment === 'repl') {
             return;
         }
-        this.app.container.withBindings(['Adonis/Core/Validator', 'Adonis/Lucid/Database', 'Adonis/Core/Logger'], (Validator, Db, Logger) => {
+        this.app.container.with(['Adonis/Core/Validator', 'Adonis/Lucid/Database'], (Validator, Db) => {
             const { extendValidator } = require('../src/Bindings/Validator');
-            extendValidator(Validator.validator, Db, Logger);
+            extendValidator(Validator.validator, Db);
         });
     }
     /**
@@ -133,7 +118,7 @@ class DatabaseServiceProvider {
         if (this.app.environment !== 'repl') {
             return;
         }
-        this.app.container.withBindings(['Adonis/Addons/Repl'], (Repl) => {
+        this.app.container.with(['Adonis/Addons/Repl'], (Repl) => {
             const { defineReplBindings } = require('../src/Bindings/Repl');
             defineReplBindings(this.app, Repl);
         });
@@ -147,7 +132,6 @@ class DatabaseServiceProvider {
         this.registerSchema();
         this.registerFactory();
         this.registerBaseSeeder();
-        this.registerMigrator();
     }
     /**
      * Called when all bindings are in place
@@ -161,13 +145,8 @@ class DatabaseServiceProvider {
      * Gracefully close connections during shutdown
      */
     async shutdown() {
-        await this.app.container.resolveBinding('Adonis/Lucid/Database').manager.closeAll();
+        await this.app.container.use('Adonis/Lucid/Database').manager.closeAll();
     }
 }
 exports.default = DatabaseServiceProvider;
-Object.defineProperty(DatabaseServiceProvider, "needsApplication", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: true
-});
+DatabaseServiceProvider.needsApplication = true;

@@ -9,7 +9,6 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ManyToManyQueryBuilder = void 0;
-const luxon_1 = require("luxon");
 const PivotHelpers_1 = require("./PivotHelpers");
 const utils_1 = require("../../../utils");
 const QueryBuilder_1 = require("../Base/QueryBuilder");
@@ -26,51 +25,15 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
                 subQuery.isPivotOnlyQuery = this.isPivotOnlyQuery;
                 subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery;
                 userFn(subQuery);
-                subQuery.applyWhere();
             };
         });
-        Object.defineProperty(this, "parent", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: parent
-        });
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
-        Object.defineProperty(this, "pivotQuery", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "relatedTable", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.relation.relatedModel().table
-        });
-        Object.defineProperty(this, "pivotHelpers", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new PivotHelpers_1.PivotHelpers(this, true)
-        });
-        Object.defineProperty(this, "cherryPickingKeys", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "appliedConstraints", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.parent = parent;
+        this.relation = relation;
+        this.pivotQuery = false;
+        this.relatedTable = this.relation.relatedModel().table;
+        this.pivotHelpers = new PivotHelpers_1.PivotHelpers(this, true);
+        this.cherryPickingKeys = false;
+        this.appliedConstraints = false;
     }
     /**
      * A boolean to know if query build targets only the pivot
@@ -81,12 +44,7 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
     }
     set isPivotOnlyQuery(pivotOnly) {
         this.pivotQuery = pivotOnly;
-        /**
-         * Get plain object for a pivot only query
-         */
-        if (this.pivotQuery) {
-            this.pojo();
-        }
+        this.wrapResultsToModelInstances = !this.pivotQuery;
     }
     /**
      * Profiler data for ManyToMany relationship
@@ -109,7 +67,7 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
      * Prefixes the related table name to a column
      */
     prefixRelatedTable(column) {
-        return column.includes('.') ? column : `${this.relatedTable}.${column}`;
+        return `${this.relatedTable}.${column}`;
     }
     /**
      * Adds where constraint to the pivot table
@@ -120,16 +78,16 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
          * Eager query contraints
          */
         if (Array.isArray(this.parent)) {
-            this.wrapExisting().whereInPivot(this.relation.pivotForeignKey, (0, utils_1.unique)(this.parent.map((model) => {
-                return (0, utils_1.getValue)(model, this.relation.localKey, this.relation, queryAction);
+            this.whereInPivot(this.relation.pivotForeignKey, utils_1.unique(this.parent.map((model) => {
+                return utils_1.getValue(model, this.relation.localKey, this.relation, queryAction);
             })));
             return;
         }
         /**
          * Query constraints
          */
-        const value = (0, utils_1.getValue)(this.parent, this.relation.localKey, this.relation, queryAction);
-        this.wrapExisting().wherePivot(this.relation.pivotForeignKey, value);
+        const value = utils_1.getValue(this.parent, this.relation.localKey, this.relation, queryAction);
+        this.wherePivot(this.relation.pivotForeignKey, value);
     }
     /**
      * Transforms the selected column names by prefixing the
@@ -175,9 +133,7 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
             /**
              * Select columns from the pivot table
              */
-            this.pivotColumns([this.relation.pivotForeignKey, this.relation.pivotRelatedForeignKey]
-                .concat(this.relation.pivotColumns)
-                .concat(this.relation.pivotTimestamps));
+            this.pivotColumns([this.relation.pivotForeignKey, this.relation.pivotRelatedForeignKey].concat(this.relation.extrasPivotColumns));
         }
         /**
          * Add inner join between related model and pivot table
@@ -279,46 +235,6 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
         return this.whereNotInPivot(key, value);
     }
     /**
-     * Same as "whereNull", but for the pivot table only
-     */
-    whereNullPivot(key) {
-        this.pivotHelpers.whereNullPivot('and', key);
-        return this;
-    }
-    /**
-     * Same as "orWhereNull", but for the pivot table only
-     */
-    orWhereNullPivot(key) {
-        this.pivotHelpers.whereNullPivot('or', key);
-        return this;
-    }
-    /**
-     * Same as "andWhereNull", but for the pivot table only
-     */
-    andWhereNullPivot(key) {
-        return this.whereNullPivot(key);
-    }
-    /**
-     * Same as "whereNotNull", but for the pivot table only
-     */
-    whereNotNullPivot(key) {
-        this.pivotHelpers.whereNullPivot('not', key);
-        return this;
-    }
-    /**
-     * Same as "orWhereNotNull", but for the pivot table only
-     */
-    orWhereNotNullPivot(key) {
-        this.pivotHelpers.whereNullPivot('orNot', key);
-        return this;
-    }
-    /**
-     * Same as "andWhereNotNull", but for the pivot table only
-     */
-    andWhereNotNullPivot(key) {
-        return this.whereNotNullPivot(key);
-    }
-    /**
      * Select pivot columns
      */
     pivotColumns(columns) {
@@ -336,8 +252,6 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
         clonedQuery.cherryPickingKeys = this.cherryPickingKeys;
         clonedQuery.appliedConstraints = this.appliedConstraints;
         clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery;
-        clonedQuery.debug(this.debugQueries);
-        clonedQuery.reporterData(this.customReporterData);
         return clonedQuery;
     }
     /**
@@ -347,37 +261,7 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
         if (this.isRelatedPreloadQuery) {
             throw new Error(`Cannot paginate relationship "${this.relation.relationName}" during preload`);
         }
-        this.applyConstraints();
         return super.paginate(page, perPage);
-    }
-    async exec() {
-        const pivotTimestamps = this.relation.pivotTimestamps.map((timestamp) => this.relation.pivotAlias(timestamp));
-        /**
-         * Transform pivot timestamps
-         */
-        if (pivotTimestamps.length) {
-            this.rowTransformer((row) => {
-                pivotTimestamps.forEach((timestamp) => {
-                    const timestampValue = row.$extras[timestamp];
-                    if (!timestampValue) {
-                        return;
-                    }
-                    /**
-                     * Convert from string
-                     */
-                    if (typeof timestampValue === 'string') {
-                        row.$extras[timestamp] = luxon_1.DateTime.fromSQL(timestampValue);
-                    }
-                    /**
-                     * Convert from date
-                     */
-                    if (timestampValue instanceof Date) {
-                        row.$extras[timestamp] = luxon_1.DateTime.fromJSDate(timestampValue);
-                    }
-                });
-            });
-        }
-        return super.exec();
     }
     /**
      * Returns the group limit query
@@ -397,12 +281,11 @@ class ManyToManyQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
             this.select('*');
         }
         this.select(this.client.raw(`row_number() over (${partitionBy} ${orderBy}) as ${rowName}`)).as('adonis_temp');
-        const groupQuery = this.relation.relatedModel().query();
-        groupQuery.usePreloader(this.preloader);
-        groupQuery.sideload(this.sideloaded);
-        groupQuery.debug(this.debugQueries);
-        this.customReporterData && groupQuery.reporterData(this.customReporterData);
-        return groupQuery.from(this).where(rowName, '<=', this.groupConstraints.limit);
+        return this.relation
+            .relatedModel()
+            .query()
+            .from(this)
+            .where(rowName, '<=', this.groupConstraints.limit);
     }
 }
 exports.ManyToManyQueryBuilder = ManyToManyQueryBuilder;

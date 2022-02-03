@@ -1,10 +1,9 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
 import { Hooks } from '@poppinss/hooks';
-import { IocContract } from '@ioc:Adonis/Core/Application';
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidRow, CacheNode, LucidModel, CherryPick, EventsList, ModelObject, HooksHandler, ModelOptions, ColumnOptions, ComputedOptions, AdapterContract, CherryPickFields, ModelColumnOptions, ModelKeysContract, ModelAssignOptions, ModelAdapterOptions, ModelRelationOptions, ModelRelations, RelationOptions, RelationshipsContract, ThroughRelationOptions, ManyToManyRelationOptions } from '@ioc:Adonis/Lucid/Orm';
-import { SnakeCaseNamingStrategy } from '../NamingStrategies/SnakeCase';
-import { LazyLoadAggregates } from '../Relations/AggregatesLoader/LazyLoad';
+import { LucidRow, OrmConfig, CacheNode, LucidModel, CherryPick, EventsList, ModelObject, HooksHandler, ModelOptions, ColumnOptions, ComputedOptions, AdapterContract, CherryPickFields, ModelColumnOptions, ModelKeysContract, ModelAdapterOptions, ModelRelationOptions } from '@ioc:Adonis/Lucid/Model';
+import { ModelRelations, RelationOptions, RelationshipsContract, ThroughRelationOptions, ManyToManyRelationOptions } from '@ioc:Adonis/Lucid/Relations';
+import { IocContract } from '@ioc:Adonis/Core/Application';
 /**
  * Abstract class to define fully fledged data models
  */
@@ -17,9 +16,9 @@ export declare class BaseModel implements LucidRow {
      */
     static $adapter: AdapterContract;
     /**
-     * Naming strategy for model properties
+     * Used to construct defaults for the model
      */
-    static namingStrategy: SnakeCaseNamingStrategy;
+    static $configurator: OrmConfig;
     /**
      * The container required to resolve hooks
      *
@@ -86,10 +85,6 @@ export declare class BaseModel implements LucidRow {
         serializedToColumns: ModelKeysContract;
         serializedToAttributes: ModelKeysContract;
     };
-    /**
-     * Creates a new model instance with payload and adapter options
-     */
-    private static newUpWithOptions;
     /**
      * Helper method for `fetchOrNewUpMany`, `fetchOrCreateMany` and `createOrUpdate`
      * many.
@@ -170,14 +165,6 @@ export declare class BaseModel implements LucidRow {
      */
     static $getRelation(name: any): any;
     /**
-     * Define a static property on the model using the inherit or
-     * define strategy.
-     *
-     * Inherit strategy will clone the property from the parent model
-     * and will set it on the current model
-     */
-    static $defineProperty<Model extends LucidModel, Prop extends keyof Model>(this: Model, propertyName: Prop, defaultValue: Model[Prop], strategy: 'inherit' | 'define' | ((value: Model[Prop]) => Model[Prop])): void;
-    /**
      * Boot the model
      */
     static boot(): void;
@@ -193,14 +180,14 @@ export declare class BaseModel implements LucidRow {
      * Returns a fresh persisted instance of model by applying
      * attributes to the model instance
      */
-    static create(values: any, options?: ModelAssignOptions): Promise<any>;
+    static create(values: any, options?: ModelAdapterOptions): Promise<any>;
     /**
      * Same as [[BaseModel.create]], but persists multiple instances. The create
      * many call will be wrapped inside a managed transaction for consistency.
      * If required, you can also pass a transaction client and the method
      * will use that instead of create a new one.
      */
-    static createMany(values: any, options?: ModelAssignOptions): Promise<any[]>;
+    static createMany(values: any, options?: ModelAdapterOptions): Promise<any[]>;
     /**
      * Find model instance using the primary key
      */
@@ -230,34 +217,38 @@ export declare class BaseModel implements LucidRow {
      */
     static findMany(value: any[], options?: ModelAdapterOptions): Promise<any>;
     /**
+     * Creates a new model instance with payload and adapter options
+     */
+    private static newUpWithOptions;
+    /**
      * Find model instance using a key/value pair or create a
      * new one without persisting it.
      */
-    static firstOrNew(searchPayload: any, savePayload?: any, options?: ModelAssignOptions): Promise<any>;
+    static firstOrNew(searchPayload: any, savePayload?: any, options?: ModelAdapterOptions): Promise<any>;
     /**
      * Same as `firstOrNew`, but also persists the newly created model instance.
      */
-    static firstOrCreate(searchPayload: any, savePayload?: any, options?: ModelAssignOptions): Promise<any>;
+    static firstOrCreate(searchPayload: any, savePayload?: any, options?: ModelAdapterOptions): Promise<any>;
     /**
      * Updates or creates a new row inside the database
      */
-    static updateOrCreate(searchPayload: any, updatedPayload: any, options?: ModelAssignOptions): Promise<any>;
+    static updateOrCreate(searchPayload: any, updatedPayload: any, options?: ModelAdapterOptions): Promise<any>;
     /**
      * Find existing rows or create an in-memory instances of the missing ones.
      */
-    static fetchOrNewUpMany(uniqueKeys: any, payload: any, options?: ModelAssignOptions): Promise<any[]>;
+    static fetchOrNewUpMany(uniqueKeys: any, payload: any, options?: ModelAdapterOptions): Promise<any[]>;
     /**
      * Find existing rows or create missing one's. One database call per insert
      * is invoked, so that each insert goes through the lifecycle of model
      * hooks.
      */
-    static fetchOrCreateMany(uniqueKeys: any, payload: any, options?: ModelAssignOptions): Promise<any[]>;
+    static fetchOrCreateMany(uniqueKeys: any, payload: any, options?: ModelAdapterOptions): Promise<any[]>;
     /**
      * Update existing rows or create missing one's. One database call per insert
      * is invoked, so that each insert and update goes through the lifecycle
      * of model hooks.
      */
-    static updateOrCreateMany(uniqueKeys: any, payload: any, options?: ModelAssignOptions): Promise<any>;
+    static updateOrCreateMany(uniqueKeys: any, payload: any, options?: ModelAdapterOptions): Promise<any>;
     /**
      * Returns all rows from the model table
      */
@@ -471,30 +462,22 @@ export declare class BaseModel implements LucidRow {
      * fill isn't allowed, since we disallow setting relationships
      * locally
      */
-    fill(values: any, allowExtraProperties?: boolean): this;
+    fill(values: any, allowNonExtraProperties?: boolean): this;
     /**
      * Merge bulk attributes with existing attributes.
      *
      * 1. If key is unknown, it will be added to the `extras` object.
      * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
      */
-    merge(values: any, allowExtraProperties?: boolean): this;
+    merge(values: any, allowNonExtraProperties?: boolean): this;
     /**
-     * Preloads one or more relationships for the current model
+     * A more expressive alias for "this.preload"
      */
     load(relationName: any, callback?: any): Promise<void>;
     /**
-     * @deprecated
+     * Preloads one or more relationships for the current model
      */
     preload(relationName: any, callback?: any): Promise<void>;
-    /**
-     * Lazy load the relationship aggregate value
-     */
-    loadAggregate(relationName: any, callback?: any): LazyLoadAggregates<this>;
-    /**
-     * Lazy load the relationship count value
-     */
-    loadCount(relationName: any, callback?: any): LazyLoadAggregates<this>;
     /**
      * Perform save on the model instance to commit mutations.
      */
@@ -538,7 +521,7 @@ export declare class BaseModel implements LucidRow {
      * Since the query builder for these actions are not exposed to
      * the end user, this method gives a way to compose queries.
      */
-    $getQueryFor(action: 'insert' | 'update' | 'delete' | 'refresh', client: QueryClientContract): any;
+    $getQueryFor(action: 'insert' | 'update' | 'delete', client: QueryClientContract): any;
     /**
      * Returns an instance of relationship on the given model
      */

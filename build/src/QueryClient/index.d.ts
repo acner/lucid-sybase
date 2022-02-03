@@ -1,10 +1,10 @@
 /// <reference path="../../adonis-typings/index.d.ts" />
 /// <reference types="@adonisjs/events/build/adonis-typings" />
 /// <reference types="@adonisjs/profiler/build/adonis-typings/profiler" />
-import { Knex } from 'knex';
+import knex from 'knex';
 import { EmitterContract } from '@ioc:Adonis/Core/Event';
 import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler';
-import { IsolationLevels, DialectContract, ConnectionContract, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+import { DialectContract, ConnectionContract, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
 import { RawBuilder } from '../Database/StaticBuilder/Raw';
 import { ReferenceBuilder } from '../Database/StaticBuilder/Reference';
 /**
@@ -39,16 +39,16 @@ export declare class QueryClient implements QueryClientContract {
     /**
      * Returns schema instance for the write client
      */
-    get schema(): Knex.SchemaBuilder;
+    get schema(): knex.SchemaBuilder;
     /**
      * Returns the read client. The readClient is optional, since we can get
      * an instance of [[QueryClient]] with a sticky write client.
      */
-    getReadClient(): Knex;
+    getReadClient(): knex;
     /**
      * Returns the write client
      */
-    getWriteClient(): Knex;
+    getWriteClient(): knex;
     /**
      * Truncate table
      */
@@ -65,23 +65,19 @@ export declare class QueryClient implements QueryClientContract {
      * Returns an instance of a transaction. Each transaction will
      * query and hold a single connection for all queries.
      */
-    transaction(callback?: {
-        isolationLevel?: IsolationLevels;
-    } | ((trx: TransactionClientContract) => Promise<any>), options?: {
-        isolationLevel?: IsolationLevels;
-    }): Promise<any>;
+    transaction(callback?: (trx: TransactionClientContract) => Promise<any>): Promise<any>;
     /**
      * Returns the knex query builder instance. The query builder is always
      * created from the `write` client, so before executing the query, you
      * may want to decide which client to use.
      */
-    knexQuery(): Knex.QueryBuilder;
+    knexQuery(): knex.QueryBuilder;
     /**
      * Returns the knex raw query builder instance. The query builder is always
      * created from the `write` client, so before executing the query, you
      * may want to decide which client to use.
      */
-    knexRawQuery(sql: string, bindings?: any): Knex.Raw;
+    knexRawQuery(sql: string, bindings?: any): knex.Raw;
     /**
      * Returns a query builder instance for a given model.
      */

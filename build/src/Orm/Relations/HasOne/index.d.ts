@@ -1,8 +1,8 @@
-/// <reference path="../../../../adonis-typings/model.d.ts" />
-/// <reference path="../../../../adonis-typings/orm.d.ts" />
 /// <reference path="../../../../adonis-typings/relations.d.ts" />
-import { QueryClientContract, OneOrMany } from '@ioc:Adonis/Lucid/Database';
-import { LucidRow, LucidModel, ModelObject, RelationOptions, HasOne as ModelHasOne, HasOneRelationContract } from '@ioc:Adonis/Lucid/Orm';
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { LucidRow, LucidModel, ModelObject } from '@ioc:Adonis/Lucid/Model';
+import { RelationOptions, HasOne as ModelHasOne, HasOneRelationContract } from '@ioc:Adonis/Lucid/Relations';
 /**
  * Manages loading and persisting has one relationship
  */
@@ -29,12 +29,8 @@ export declare class HasOne implements HasOneRelationContract<LucidModel, LucidM
     /**
      * Reference to the onQuery hook defined by the user
      */
-    onQueryHook: ((query: import("@ioc:Adonis/Lucid/Orm").RelationQueryBuilderContract<LucidModel, any> | import("@ioc:Adonis/Lucid/Orm").RelationSubQueryBuilderContract<LucidModel>) => void) | undefined;
+    onQueryHook: ((query: import("@ioc:Adonis/Lucid/Relations").RelationQueryBuilderContract<LucidModel, any> | import("@ioc:Adonis/Lucid/Relations").RelationSubQueryBuilderContract<LucidModel>) => void) | undefined;
     constructor(relationName: string, relatedModel: () => LucidModel, options: RelationOptions<ModelHasOne<LucidModel>>, model: LucidModel);
-    /**
-     * Clone relationship instance
-     */
-    clone(parent: LucidModel): any;
     /**
      * Boot the relationship and ensure that all keys are in
      * place for queries to do their job.

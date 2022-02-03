@@ -1,6 +1,7 @@
-import { Knex } from 'knex';
+import knex from 'knex';
+import { LucidModel } from '@ioc:Adonis/Lucid/Model';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidModel, ManyToManySubQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+import { ManyToManySubQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations';
 import { ManyToMany } from './index';
 import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder';
 /**
@@ -22,7 +23,7 @@ export declare class ManyToManySubQueryBuilder extends BaseSubQueryBuilder imple
      */
     protected appliedConstraints: boolean;
     private hasSelfRelation;
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, relation: ManyToMany);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, relation: ManyToMany);
     /**
      * Prefixes the related table name to a column
      */
@@ -93,30 +94,6 @@ export declare class ManyToManySubQueryBuilder extends BaseSubQueryBuilder imple
      * Alias from `whereNotInPivot`
      */
     andWhereNotInPivot(key: any, value: any): this;
-    /**
-     * Same as "whereNull", but for the pivot table only
-     */
-    whereNullPivot(key: string): this;
-    /**
-     * Same as "orWhereNull", but for the pivot table only
-     */
-    orWhereNullPivot(key: string): this;
-    /**
-     * Same as "andWhereNull", but for the pivot table only
-     */
-    andWhereNullPivot(key: string): this;
-    /**
-     * Same as "whereNotNull", but for the pivot table only
-     */
-    whereNotNullPivot(key: string): this;
-    /**
-     * Same as "orWhereNotNull", but for the pivot table only
-     */
-    orWhereNotNullPivot(key: string): this;
-    /**
-     * Same as "andWhereNotNull", but for the pivot table only
-     */
-    andWhereNotNullPivot(key: string): this;
     /**
      * Select pivot columns
      */

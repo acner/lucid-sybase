@@ -20,106 +20,46 @@ const MigrationSource_1 = require("./MigrationSource");
 class Migrator extends events_1.EventEmitter {
     constructor(db, app, options) {
         super();
-        Object.defineProperty(this, "db", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: db
-        });
-        Object.defineProperty(this, "app", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: app
-        });
-        Object.defineProperty(this, "options", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: options
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.db.connection(this.options.connectionName || this.db.primaryConnectionName)
-        });
-        Object.defineProperty(this, "config", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.db.getRawConnection(this.client.connectionName).config
-        });
+        this.db = db;
+        this.app = app;
+        this.options = options;
+        this.client = this.db.connection(this.options.connectionName || this.db.primaryConnectionName);
+        this.config = this.db.getRawConnection(this.client.connectionName).config;
         /**
          * Reference to the migrations config for the given connection
          */
-        Object.defineProperty(this, "migrationsConfig", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: Object.assign({
-                tableName: 'adonis_schema',
-                disableTransactions: false,
-            }, this.config.migrations)
-        });
+        this.migrationsConfig = Object.assign({
+            tableName: 'adonis_schema',
+            disableTransactions: false,
+        }, this.config.migrations);
         /**
          * Whether or not the migrator has been booted
          */
-        Object.defineProperty(this, "booted", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.booted = false;
         /**
          * Migration source to collect schema files from the disk
          */
-        Object.defineProperty(this, "migrationSource", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new MigrationSource_1.MigrationSource(this.config, this.app)
-        });
+        this.migrationSource = new MigrationSource_1.MigrationSource(this.config, this.app);
         /**
          * Mode decides in which mode the migrator is executing migrations. The migrator
          * instance can only run in one mode at a time.
          *
          * The value is set when `migrate` or `rollback` method is invoked
          */
-        Object.defineProperty(this, "direction", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.options.direction
-        });
+        this.direction = this.options.direction;
         /**
          * Instead of executing migrations, just return the generated SQL queries
          */
-        Object.defineProperty(this, "dryRun", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: !!this.options.dryRun
-        });
+        this.dryRun = !!this.options.dryRun;
         /**
          * An array of files we have successfully migrated. The files are
          * collected regardless of `up` or `down` methods
          */
-        Object.defineProperty(this, "migratedFiles", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.migratedFiles = {};
         /**
          * Last error occurred when executing migrations
          */
-        Object.defineProperty(this, "error", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: null
-        });
+        this.error = null;
     }
     /**
      * Current status of the migrator

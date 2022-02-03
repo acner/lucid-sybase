@@ -1,5 +1,7 @@
-import { QueryClientContract, OneOrMany } from '@ioc:Adonis/Lucid/Database';
-import { LucidModel, LucidRow, BelongsToClientContract } from '@ioc:Adonis/Lucid/Orm';
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model';
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { BelongsToClientContract } from '@ioc:Adonis/Lucid/Relations';
 import { BelongsTo } from './index';
 import { BelongsToQueryBuilder } from './QueryBuilder';
 import { BelongsToSubQueryBuilder } from './SubQueryBuilder';

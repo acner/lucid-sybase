@@ -1,8 +1,8 @@
-/// <reference path="../../../../adonis-typings/model.d.ts" />
-/// <reference path="../../../../adonis-typings/orm.d.ts" />
 /// <reference path="../../../../adonis-typings/relations.d.ts" />
-import { QueryClientContract, OneOrMany } from '@ioc:Adonis/Lucid/Database';
-import { LucidRow, LucidModel, ModelObject, RelationOptions, BelongsToRelationContract, BelongsTo as ModelBelongsTo } from '@ioc:Adonis/Lucid/Orm';
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
+import { OneOrMany } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { LucidModel, LucidRow, ModelObject } from '@ioc:Adonis/Lucid/Model';
+import { RelationOptions, BelongsToRelationContract, BelongsTo as ModelBelongsTo } from '@ioc:Adonis/Lucid/Relations';
 /**
  * Manages loading and persisting belongs to relationship
  */
@@ -38,14 +38,10 @@ export declare class BelongsTo implements BelongsToRelationContract<LucidModel, 
     /**
      * Reference to the onQuery hook defined by the user
      */
-    onQueryHook: ((query: import("@ioc:Adonis/Lucid/Orm").RelationQueryBuilderContract<LucidModel, any> | import("@ioc:Adonis/Lucid/Orm").RelationSubQueryBuilderContract<LucidModel>) => void) | undefined;
+    onQueryHook: ((query: import("@ioc:Adonis/Lucid/Relations").RelationQueryBuilderContract<LucidModel, any> | import("@ioc:Adonis/Lucid/Relations").RelationSubQueryBuilderContract<LucidModel>) => void) | undefined;
     constructor(relationName: string, relatedModel: () => LucidModel, options: RelationOptions<ModelBelongsTo<LucidModel>>, model: LucidModel);
     /**
-     * Clone relationship instance
-     */
-    clone(parent: LucidModel): any;
-    /**
-     * Returns a boolean telling if the related row belongs to the parent
+     * Returns a boolean saving related row belongs to the parent
      * row or not.
      */
     private isRelatedRow;

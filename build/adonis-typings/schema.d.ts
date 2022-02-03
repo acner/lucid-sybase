@@ -1,6 +1,7 @@
 declare module '@ioc:Adonis/Lucid/Schema' {
-    import { Knex } from 'knex';
-    import { QueryClientContract, RawQueryBindings } from '@ioc:Adonis/Lucid/Database';
+    import { SchemaBuilder, Raw } from 'knex';
+    import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
+    import { RawQueryBindings } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
     /**
      * Shape of callback to defer database calls
      */
@@ -20,9 +21,9 @@ declare module '@ioc:Adonis/Lucid/Schema' {
         dryRun: boolean;
         debug: boolean;
         db: QueryClientContract;
-        schema: Knex.SchemaBuilder;
-        now(precision?: number): Knex.Raw;
-        raw(sql: string, bindings?: RawQueryBindings): Knex.Raw;
+        schema: SchemaBuilder;
+        now(precision?: number): Raw;
+        raw(sql: string, bindings?: RawQueryBindings): Raw;
         defer: (cb: DeferCallback) => void;
         up(): Promise<void> | void;
         down(): Promise<void> | void;

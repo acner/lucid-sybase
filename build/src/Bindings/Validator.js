@@ -9,31 +9,15 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.extendValidator = void 0;
-const luxon_1 = require("luxon");
 const utils_1 = require("@poppinss/utils");
 /**
  * Checks for database rows for `exists` and `unique` rule.
  */
 class DbRowCheck {
     constructor(ruleName, database, helpers) {
-        Object.defineProperty(this, "ruleName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: ruleName
-        });
-        Object.defineProperty(this, "database", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: database
-        });
-        Object.defineProperty(this, "helpers", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: helpers
-        });
+        this.ruleName = ruleName;
+        this.database = database;
+        this.helpers = helpers;
     }
     /**
      * Applies user defined where constraints on the query builder
@@ -112,7 +96,6 @@ class DbRowCheck {
             column: options.column,
             caseInsensitive: !!options.caseInsensitive,
             connection: options.connection,
-            dateFormat: options.dateFormat,
             where: this.normalizeConstraints(options.where || options.constraints),
             whereNot: this.normalizeConstraints(options.whereNot),
         };
@@ -120,16 +103,8 @@ class DbRowCheck {
     /**
      * Validate value
      */
-    async validate(value, { table, column, where, whereNot, connection, caseInsensitive, dateFormat }, { pointer, errorReporter, arrayExpressionPointer, refs }) {
-        const client = this.database.connection(connection);
-        const query = client.from(table).select(1);
-        /**
-         * Convert datetime to a string
-         */
-        if (luxon_1.DateTime.isDateTime(value)) {
-            const format = dateFormat || client.dialect.dateTimeFormat;
-            value = value.toFormat(format);
-        }
+    async validate(value, { table, column, where, whereNot, connection, caseInsensitive }, { pointer, errorReporter, arrayExpressionPointer, refs }) {
+        const query = this.database.connection(connection).query().from(table);
         /**
          * https://www.sqlite.org/lang_corefunc.html#lower
          * https://docs.aws.amazon.com/redshift/latest/dg/r_LOWER.html
@@ -164,7 +139,7 @@ class DbRowCheck {
 /**
  * Extends the validator by adding `unique` and `exists`
  */
-function extendValidator(validator, database, logger) {
+function extendValidator(validator, database) {
     /**
      * Exists rule to ensure the value exists in the database
      */
@@ -174,8 +149,7 @@ function extendValidator(validator, database, logger) {
             await existsChecker.validate(value, compiledOptions, options);
         }
         catch (error) {
-            logger.fatal({ err: error }, '"exists" validation rule failed');
-            options.errorReporter.report(options.pointer, 'exists', 'exists validation failure', options.arrayExpressionPointer);
+            options.errorReporter.report(options.pointer, 'exists', error.message, options.arrayExpressionPointer);
         }
     }, (options) => {
         return {
@@ -192,8 +166,7 @@ function extendValidator(validator, database, logger) {
             await uniqueChecker.validate(value, compiledOptions, options);
         }
         catch (error) {
-            logger.fatal({ err: error }, '"unique" validation rule failed');
-            options.errorReporter.report(options.pointer, 'unique', 'unique validation failure', options.arrayExpressionPointer);
+            options.errorReporter.report(options.pointer, 'unique', error.message, options.arrayExpressionPointer);
         }
     }, (options) => {
         return {

@@ -1,9 +1,8 @@
 /// <reference path="../../../../adonis-typings/model.d.ts" />
-/// <reference path="../../../../adonis-typings/orm.d.ts" />
-/// <reference path="../../../../adonis-typings/relations.d.ts" />
-import { Knex } from 'knex';
+import knex from 'knex';
+import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidRow, LucidModel, HasManyThroughQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+import { HasManyThroughQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations';
 import { HasManyThrough } from './index';
 import { BaseQueryBuilder } from '../Base/QueryBuilder';
 /**
@@ -17,7 +16,7 @@ export declare class HasManyThroughQueryBuilder extends BaseQueryBuilder impleme
     protected appliedConstraints: boolean;
     private throughTable;
     private relatedTable;
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, parent: LucidRow | LucidRow[], relation: HasManyThrough);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, parent: LucidRow | LucidRow[], relation: HasManyThrough);
     /**
      * Prefixes the through table name to a column
      */
@@ -64,9 +63,9 @@ export declare class HasManyThroughQueryBuilder extends BaseQueryBuilder impleme
     /**
      * Paginate through rows inside a given table
      */
-    paginate(page: number, perPage?: number): Promise<any>;
+    paginate(page: number, perPage?: number): Promise<import("../../../Database/Paginator/SimplePaginator").SimplePaginator>;
     /**
      * Returns the group limit query
      */
-    getGroupLimitQuery(): import("@ioc:Adonis/Lucid/Orm").ModelQueryBuilderContract<LucidModel, LucidRow>;
+    getGroupLimitQuery(): import("@ioc:Adonis/Lucid/Model").ModelQueryBuilderContract<LucidModel, LucidRow>;
 }

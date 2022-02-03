@@ -9,7 +9,7 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defineReplBindings = void 0;
-const helpers_1 = require("@poppinss/utils/build/helpers");
+const utils_1 = require("@poppinss/utils");
 /**
  * Helper to define REPL state
  */
@@ -28,9 +28,9 @@ function defineReplBindings(app, Repl) {
         const modelsPath = app.resolveNamespaceDirectory('models') || 'app/Models';
         console.log(repl.colors.dim(`recursively reading models from "${modelsPath}"`));
         const modelsAbsPath = app.makePath(modelsPath);
-        setupReplState(repl, 'models', (0, helpers_1.requireAll)(modelsAbsPath));
+        setupReplState(repl, 'models', utils_1.requireAll(modelsAbsPath));
     }, {
-        description: 'Recursively load Lucid models to the "models" property',
+        description: 'Recursively models Lucid models to the "models" property',
     });
     /**
      * Load database provider to the Db provider
@@ -39,21 +39,6 @@ function defineReplBindings(app, Repl) {
         setupReplState(repl, 'Db', app.container.use('Adonis/Lucid/Database'));
     }, {
         description: 'Load database provider to the "Db" property',
-    });
-    /**
-     * Load all factories to the factories property
-     */
-    Repl.addMethod('loadFactories', (repl) => {
-        const factoriesPath = app.resolveNamespaceDirectory('factories') || 'database/factories';
-        console.log(repl.colors.dim(`recursively reading factories from "${factoriesPath}"`));
-        const factoriesAbsPath = app.makePath(factoriesPath);
-        const loadedFactories = (0, helpers_1.requireAll)(factoriesAbsPath);
-        if (!loadedFactories) {
-            return;
-        }
-        setupReplState(repl, 'factories', Object.values(loadedFactories).reduce((acc, items) => ({ ...acc, ...items }), {}));
-    }, {
-        description: 'Recursively load factories to the "factories" property',
     });
 }
 exports.defineReplBindings = defineReplBindings;

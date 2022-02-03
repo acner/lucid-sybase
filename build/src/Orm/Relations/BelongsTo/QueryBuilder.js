@@ -24,27 +24,11 @@ class BelongsToQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
                 subQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery;
                 subQuery.isChildQuery = true;
                 userFn(subQuery);
-                subQuery.applyWhere();
             };
         });
-        Object.defineProperty(this, "parent", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: parent
-        });
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
-        Object.defineProperty(this, "appliedConstraints", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.parent = parent;
+        this.relation = relation;
+        this.appliedConstraints = false;
     }
     /**
      * Raises exception that FK value is null
@@ -95,7 +79,7 @@ class BelongsToQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
                 }
                 return foreignKeyValue !== null;
             });
-            this.wrapExisting().whereIn(this.relation.localKey, (0, utils_2.unique)(foreignKeyValues));
+            this.whereIn(this.relation.localKey, utils_2.unique(foreignKeyValues));
             return;
         }
         /**
@@ -104,7 +88,7 @@ class BelongsToQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
         if (this.parent[this.relation.foreignKey] === undefined) {
             this.raiseMissingForeignKey();
         }
-        this.wrapExisting().where(this.relation.localKey, this.parent[this.relation.foreignKey]);
+        this.where(this.relation.localKey, this.parent[this.relation.foreignKey]);
         /**
          * Do not add limit when updating or deleting
          */
@@ -121,8 +105,6 @@ class BelongsToQueryBuilder extends QueryBuilder_1.BaseQueryBuilder {
         this.applyQueryFlags(clonedQuery);
         clonedQuery.appliedConstraints = this.appliedConstraints;
         clonedQuery.isRelatedPreloadQuery = this.isRelatedPreloadQuery;
-        clonedQuery.debug(this.debugQueries);
-        clonedQuery.reporterData(this.customReporterData);
         return clonedQuery;
     }
     /**

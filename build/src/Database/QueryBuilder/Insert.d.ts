@@ -1,12 +1,13 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
-import { Knex } from 'knex';
+import knex from 'knex';
 import { Macroable } from 'macroable';
-import { QueryClientContract, TransactionClientContract, InsertQueryBuilderContract } from '@ioc:Adonis/Lucid/Database';
+import { InsertQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
 /**
  * Exposes the API for performing SQL inserts
  */
 export declare class InsertQueryBuilder extends Macroable implements InsertQueryBuilderContract {
-    knexQuery: Knex.QueryBuilder;
+    knexQuery: knex.QueryBuilder;
     client: QueryClientContract;
     /**
      * Custom data someone want to send to the profiler and the
@@ -23,24 +24,11 @@ export declare class InsertQueryBuilder extends Macroable implements InsertQuery
      */
     protected static macros: {};
     protected static getters: {};
-    constructor(knexQuery: Knex.QueryBuilder, client: QueryClientContract);
+    constructor(knexQuery: knex.QueryBuilder, client: QueryClientContract);
     /**
      * Returns the log data
      */
     private getQueryData;
-    /**
-     * Transforms the value to something that knex can internally understand and
-     * handle. It includes.
-     *
-     * 1. Returning the `knexBuilder` for sub queries.
-     * 2. Returning the `knexBuilder` for raw queries.
-     */
-    protected transformValue(value: any): any;
-    /**
-     * Returns the underlying knex raw query builder for Lucid raw
-     * query builder
-     */
-    protected transformRaw(value: any): any;
     /**
      * Define custom reporter data. It will be merged with
      * the existing data
@@ -50,10 +38,6 @@ export declare class InsertQueryBuilder extends Macroable implements InsertQuery
      * Define table for performing the insert query
      */
     table(table: any): this;
-    /**
-     * Define schema for the table
-     */
-    withSchema(schema: any): this;
     /**
      * Define returning columns for the insert query
      */
@@ -91,7 +75,7 @@ export declare class InsertQueryBuilder extends Macroable implements InsertQuery
     /**
      * Get sql representation of the query
      */
-    toSQL(): Knex.Sql;
+    toSQL(): knex.Sql;
     /**
      * Implementation of `then` for the promise API
      */

@@ -32,10 +32,6 @@ export default class DatabaseServiceProvider {
      */
     private registerHealthChecker;
     /**
-     * Register the migrator used for database migration
-     */
-    private registerMigrator;
-    /**
      * Extends the validator by defining validation rules
      */
     private defineValidationRules;

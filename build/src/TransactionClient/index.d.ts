@@ -2,11 +2,11 @@
 /// <reference types="@adonisjs/events/build/adonis-typings" />
 /// <reference types="@adonisjs/profiler/build/adonis-typings/profiler" />
 /// <reference types="node" />
-import { Knex } from 'knex';
+import knex from 'knex';
 import { EventEmitter } from 'events';
 import { EmitterContract } from '@ioc:Adonis/Core/Event';
 import { ProfilerRowContract } from '@ioc:Adonis/Core/Profiler';
-import { IsolationLevels, DialectContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+import { TransactionClientContract, DialectContract } from '@ioc:Adonis/Lucid/Database';
 import { RawBuilder } from '../Database/StaticBuilder/Raw';
 import { ReferenceBuilder } from '../Database/StaticBuilder/Reference';
 /**
@@ -14,7 +14,7 @@ import { ReferenceBuilder } from '../Database/StaticBuilder/Reference';
  * and executes queries inside a given transaction.
  */
 export declare class TransactionClient extends EventEmitter implements TransactionClientContract {
-    knexClient: Knex.Transaction;
+    knexClient: knex.Transaction;
     dialect: DialectContract;
     connectionName: string;
     debug: boolean;
@@ -32,8 +32,7 @@ export declare class TransactionClient extends EventEmitter implements Transacti
      * The profiler to be used for profiling queries
      */
     profiler?: ProfilerRowContract;
-    private hooks;
-    constructor(knexClient: Knex.Transaction, dialect: DialectContract, connectionName: string, debug: boolean, emitter: EmitterContract);
+    constructor(knexClient: knex.Transaction, dialect: DialectContract, connectionName: string, debug: boolean, emitter: EmitterContract);
     /**
      * Whether or not transaction has been completed
      */
@@ -41,17 +40,17 @@ export declare class TransactionClient extends EventEmitter implements Transacti
     /**
      * Returns schema instance for the write client
      */
-    get schema(): Knex.SchemaBuilder;
+    get schema(): knex.SchemaBuilder;
     /**
      * Returns the read client. Which is just a single client in case
      * of transactions
      */
-    getReadClient(): Knex.Transaction<any, any[]>;
+    getReadClient(): knex.Transaction<any, any>;
     /**
      * Returns the write client. Which is just a single client in case
      * of transactions
      */
-    getWriteClient(): Knex.Transaction<any, any[]>;
+    getWriteClient(): knex.Transaction<any, any>;
     /**
      * Truncate tables inside a transaction
      */
@@ -68,13 +67,13 @@ export declare class TransactionClient extends EventEmitter implements Transacti
     /**
      * Get a new query builder instance
      */
-    knexQuery(): Knex.QueryBuilder;
+    knexQuery(): knex.QueryBuilder;
     /**
      * Returns the knex raw query builder instance. The query builder is always
      * created from the `write` client, so before executing the query, you
      * may want to decide which client to use.
      */
-    knexRawQuery(sql: string, bindings?: any): Knex.Raw;
+    knexRawQuery(sql: string, bindings?: any): knex.Raw;
     /**
      * Returns a query builder instance for a given model. The `connection`
      * and `profiler` is passed down to the model, so that it continue
@@ -106,11 +105,7 @@ export declare class TransactionClient extends EventEmitter implements Transacti
     /**
      * Returns another instance of transaction with save point
      */
-    transaction(callback?: {
-        isolationLevel?: IsolationLevels;
-    } | ((trx: TransactionClientContract) => Promise<any>), options?: {
-        isolationLevel?: IsolationLevels;
-    }): Promise<any>;
+    transaction(callback?: (trx: TransactionClientContract) => Promise<any>): Promise<any>;
     /**
      * Same as [[Transaction.query]] but also selects the table
      */
@@ -119,10 +114,6 @@ export declare class TransactionClient extends EventEmitter implements Transacti
      * Same as [[Transaction.insertTable]] but also selects the table
      */
     table(table: any): any;
-    /**
-     * Register after commit or rollback hook
-     */
-    after(event: 'rollback' | 'commit', handler: () => void | Promise<void>): this;
     /**
      * Commit the transaction
      */

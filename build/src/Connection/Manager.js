@@ -19,37 +19,17 @@ const index_1 = require("./index");
  */
 class ConnectionManager {
     constructor(logger, emitter) {
-        Object.defineProperty(this, "logger", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: logger
-        });
-        Object.defineProperty(this, "emitter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: emitter
-        });
+        this.logger = logger;
+        this.emitter = emitter;
         /**
          * List of managed connections
          */
-        Object.defineProperty(this, "connections", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Map()
-        });
+        this.connections = new Map();
         /**
          * Connections for which the config was patched. They must get removed
          * overtime, unless application is behaving unstable.
          */
-        Object.defineProperty(this, "orphanConnections", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Set()
-        });
+        this.orphanConnections = new Set();
     }
     /**
      * Handles disconnection of a connection

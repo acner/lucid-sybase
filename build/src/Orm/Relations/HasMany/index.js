@@ -17,99 +17,27 @@ const utils_1 = require("../../../utils");
  */
 class HasMany {
     constructor(relationName, relatedModel, options, model) {
-        Object.defineProperty(this, "relationName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relationName
-        });
-        Object.defineProperty(this, "relatedModel", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relatedModel
-        });
-        Object.defineProperty(this, "options", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: options
-        });
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: model
-        });
+        this.relationName = relationName;
+        this.relatedModel = relatedModel;
+        this.options = options;
+        this.model = model;
         /**
          * The relationship name
          */
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 'hasMany'
-        });
+        this.type = 'hasMany';
         /**
          * Whether or not the relationship instance has been
          * booted
          */
-        Object.defineProperty(this, "booted", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.booted = false;
         /**
          * The key name for serializing the relationship
          */
-        Object.defineProperty(this, "serializeAs", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs
-        });
-        /**
-         * Local key is reference to the primary key in the self table
-         * @note: Available after boot is invoked
-         */
-        Object.defineProperty(this, "localKey", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "localKeyColumName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Foreign key is reference to the foreign key in the related table
-         * @note: Available after boot is invoked
-         */
-        Object.defineProperty(this, "foreignKey", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "foreignKeyColumName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.serializeAs = this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs;
         /**
          * Reference to the onQuery hook defined by the user
          */
-        Object.defineProperty(this, "onQueryHook", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.options.onQuery
-        });
+        this.onQueryHook = this.options.onQuery;
     }
     /**
      * Returns a boolean saving related row belongs to the parent
@@ -117,12 +45,6 @@ class HasMany {
      */
     isRelatedRow(parent, related) {
         return parent[this.localKey] !== undefined && related[this.foreignKey] === parent[this.localKey];
-    }
-    /**
-     * Clone relationship instance
-     */
-    clone(parent) {
-        return new HasMany(this.relationName, this.relatedModel, { ...this.options }, parent);
     }
     /**
      * Boot the relationship and ensure that all keys are in
@@ -142,12 +64,12 @@ class HasMany {
             localKey: {
                 model: this.model,
                 key: this.options.localKey ||
-                    this.model.namingStrategy.relationLocalKey(this.type, this.model, relatedModel, this.relationName),
+                    this.model.$configurator.getLocalKey(this.type, this.model, relatedModel),
             },
             foreignKey: {
                 model: relatedModel,
                 key: this.options.foreignKey ||
-                    this.model.namingStrategy.relationForeignKey(this.type, this.model, relatedModel, this.relationName),
+                    this.model.$configurator.getForeignKey(this.type, this.model, relatedModel),
             },
         }).extract();
         /**
@@ -169,14 +91,31 @@ class HasMany {
      * Set related model instances
      */
     setRelated(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
+        related.forEach((relatedRow) => {
+            if (!this.isRelatedRow(parent, relatedRow)) {
+                throw new Error('malformed setRelated call');
+            }
+        });
         parent.$setRelated(this.relationName, related);
     }
     /**
      * Push related model instance(s)
      */
     pushRelated(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
+        if (Array.isArray(related)) {
+            related.forEach((relatedRow) => {
+                if (!this.isRelatedRow(parent, relatedRow)) {
+                    throw new Error('malformed pushRelated call');
+                }
+            });
+        }
+        else {
+            if (!this.isRelatedRow(parent, related)) {
+                throw new Error('malformed pushRelated call');
+            }
+        }
         parent.$pushRelated(this.relationName, related);
     }
     /**
@@ -184,7 +123,7 @@ class HasMany {
      * models.
      */
     setRelatedForMany(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         parent.forEach((parentModel) => {
             const relatedRows = related.filter((relatedModel) => this.isRelatedRow(parentModel, relatedModel));
             this.setRelated(parentModel, relatedRows);
@@ -194,28 +133,28 @@ class HasMany {
      * Returns an instance of query client for invoking queries
      */
     client(parent, client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return new QueryClient_1.HasManyQueryClient(this, parent, client);
     }
     /**
      * Returns an instance of the eager query
      */
     eagerQuery(parent, client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return QueryClient_1.HasManyQueryClient.eagerQuery(client, this, parent);
     }
     /**
      * Returns instance of query builder
      */
     subQuery(client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return QueryClient_1.HasManyQueryClient.subQuery(client, this);
     }
     /**
      * Hydrates values object for persistance.
      */
     hydrateForPersistance(parent, values) {
-        values[this.foreignKey] = (0, utils_1.getValue)(parent, this.localKey, this, 'persist');
+        values[this.foreignKey] = utils_1.getValue(parent, this.localKey, this, 'persist');
     }
 }
 exports.HasMany = HasMany;

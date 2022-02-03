@@ -21,63 +21,34 @@ class HasManyThroughSubQueryBuilder extends SubQueryBuilder_1.BaseSubQueryBuilde
                 const subQuery = new HasManyThroughSubQueryBuilder($builder, this.client, this.relation);
                 subQuery.isChildQuery = true;
                 userFn(subQuery);
-                subQuery.applyWhere();
             };
         });
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
+        this.relation = relation;
         /**
          * A boolean to track if query constraints for the relationship
          * has been applied or not
          */
-        Object.defineProperty(this, "appliedConstraints", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.appliedConstraints = false;
         /**
          * Reference to the related table
          */
-        Object.defineProperty(this, "relatedTable", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.relation.relatedModel().table
-        });
+        this.relatedTable = this.relation.relatedModel().table;
         /**
          * Reference to the through table
          */
-        Object.defineProperty(this, "throughTable", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.relation.throughModel().table
-        });
-        Object.defineProperty(this, "hasSelfRelation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.relatedTable === this.relation.model.table
-        });
+        this.throughTable = this.relation.throughModel().table;
+        this.hasSelfRelation = this.relatedTable === this.relation.model.table;
     }
     /**
      * Prefixes the through table name to a column
      */
     prefixThroughTable(column) {
-        return column.includes('.') ? column : `${this.throughTable}.${column}`;
+        return `${this.throughTable}.${column}`;
     }
     /**
      * Prefixes the related table name to a column
      */
     prefixRelatedTable(column) {
-        if (column.includes('.')) {
-            return column;
-        }
         if (this.hasSelfRelation) {
             return `${this.selfJoinAlias}.${column}`;
         }
@@ -137,8 +108,6 @@ class HasManyThroughSubQueryBuilder extends SubQueryBuilder_1.BaseSubQueryBuilde
         const clonedQuery = new HasManyThroughSubQueryBuilder(this.knexQuery.clone(), this.client, this.relation);
         this.applyQueryFlags(clonedQuery);
         clonedQuery.appliedConstraints = this.appliedConstraints;
-        clonedQuery.debug(this.debugQueries);
-        clonedQuery.reporterData(this.customReporterData);
         return clonedQuery;
     }
 }

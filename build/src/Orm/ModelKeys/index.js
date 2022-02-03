@@ -14,12 +14,7 @@ exports.ModelKeys = void 0;
  */
 class ModelKeys {
     constructor(keys = {}) {
-        Object.defineProperty(this, "keys", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: keys
-        });
+        this.keys = keys;
     }
     /**
      * Add a new key

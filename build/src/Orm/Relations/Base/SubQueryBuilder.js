@@ -20,12 +20,7 @@ class BaseSubQueryBuilder extends QueryBuilder_1.ModelQueryBuilder {
          * The counter for the self join alias. Usually will be set by
          * the consumer
          */
-        Object.defineProperty(this, "selfJoinCounter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 0
-        });
+        this.selfJoinCounter = 0;
     }
     /**
      * Alias for the self join table

@@ -62,11 +62,11 @@ class MigrationsBase extends standalone_1.BaseCommand {
         console.log(this.logger.colors.gray(`------------- ${file.file.name} -------------`));
         console.log();
         file.queries.map((sql) => {
-            (0, prettyPrint_1.prettyPrint)({
+            prettyPrint_1.prettyPrint({
                 connection: connectionName,
                 sql: sql,
                 ddl: true,
-                method: (0, utils_1.getDDLMethod)(sql),
+                method: utils_1.getDDLMethod(sql),
                 bindings: [],
             });
             console.log();
@@ -137,7 +137,7 @@ class MigrationsBase extends standalone_1.BaseCommand {
         switch (migrator.status) {
             case 'completed':
                 const completionMessage = migrator.direction === 'up' ? 'Migrated in' : 'Reverted in';
-                console.log(`\n${completionMessage} ${this.colors.cyan((0, pretty_hrtime_1.default)(duration))}`);
+                console.log(`\n${completionMessage} ${this.colors.cyan(pretty_hrtime_1.default(duration))}`);
                 break;
             case 'skipped':
                 const message = migrator.direction === 'up' ? 'Already up to date' : 'Already at latest batch';

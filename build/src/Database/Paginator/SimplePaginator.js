@@ -10,87 +10,32 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SimplePaginator = void 0;
 const qs_1 = require("qs");
-const SnakeCase_1 = require("../../Orm/NamingStrategies/SnakeCase");
 /**
  * Simple paginator works with the data set provided by the standard
  * `offset` and `limit` based pagination.
  */
 class SimplePaginator extends Array {
-    constructor(totalNumber, perPage, currentPage, ...rows) {
+    constructor(rows, totalNumber, perPage, currentPage) {
         super(...rows);
-        Object.defineProperty(this, "totalNumber", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: totalNumber
-        });
-        Object.defineProperty(this, "perPage", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: perPage
-        });
-        Object.defineProperty(this, "currentPage", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: currentPage
-        });
-        Object.defineProperty(this, "qs", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
-        Object.defineProperty(this, "url", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: '/'
-        });
-        Object.defineProperty(this, "rows", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Can be defined at per instance level as well
-         */
-        Object.defineProperty(this, "namingStrategy", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: SimplePaginator.namingStrategy
-        });
+        this.rows = rows;
+        this.totalNumber = totalNumber;
+        this.perPage = perPage;
+        this.currentPage = currentPage;
+        this.qs = {};
+        this.url = '/';
         /**
          * The first page is always 1
          */
-        Object.defineProperty(this, "firstPage", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 1
-        });
+        this.firstPage = 1;
         /**
          * Find if results set is empty or not
          */
-        Object.defineProperty(this, "isEmpty", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.isEmpty = this.rows.length === 0;
         /**
          * Casting `total` to a number. Later, we can think of situations
          * to cast it to a bigint
          */
-        Object.defineProperty(this, "total", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: Number(this.totalNumber)
-        });
+        this.total = Number(this.totalNumber);
         /**
          * Find if there are total records or not. This is not same as
          * `isEmpty`.
@@ -98,41 +43,19 @@ class SimplePaginator extends Array {
          * The `isEmpty` reports about the current set of results. However `hasTotal`
          * reports about the total number of records, regardless of the current.
          */
-        Object.defineProperty(this, "hasTotal", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.total > 0
-        });
+        this.hasTotal = this.total > 0;
         /**
          * The Last page number
          */
-        Object.defineProperty(this, "lastPage", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: Math.max(Math.ceil(this.total / this.perPage), 1)
-        });
+        this.lastPage = Math.max(Math.ceil(this.total / this.perPage), 1);
         /**
          * Find if there are more pages to come
          */
-        Object.defineProperty(this, "hasMorePages", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.lastPage > this.currentPage
-        });
+        this.hasMorePages = this.lastPage > this.currentPage;
         /**
          * Find if there are enough results to be paginated or not
          */
-        Object.defineProperty(this, "hasPages", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.lastPage !== 1
-        });
-        this.rows = rows;
-        this.isEmpty = this.rows.length === 0;
+        this.hasPages = this.currentPage !== 1 || this.hasMorePages;
     }
     /**
      * A reference to the result rows
@@ -144,17 +67,16 @@ class SimplePaginator extends Array {
      * Returns JSON meta data
      */
     getMeta() {
-        const metaKeys = this.namingStrategy.paginationMetaKeys();
         return {
-            [metaKeys.total]: this.total,
-            [metaKeys.perPage]: this.perPage,
-            [metaKeys.currentPage]: this.currentPage,
-            [metaKeys.lastPage]: this.lastPage,
-            [metaKeys.firstPage]: this.firstPage,
-            [metaKeys.firstPageUrl]: this.getUrl(1),
-            [metaKeys.lastPageUrl]: this.getUrl(this.lastPage),
-            [metaKeys.nextPageUrl]: this.getNextPageUrl(),
-            [metaKeys.previousPageUrl]: this.getPreviousPageUrl(),
+            total: this.total,
+            per_page: this.perPage,
+            current_page: this.currentPage,
+            last_page: this.lastPage,
+            first_page: this.firstPage,
+            first_page_url: this.getUrl(1),
+            last_page_url: this.getUrl(this.lastPage),
+            next_page_url: this.getNextPageUrl(),
+            previous_page_url: this.getPreviousPageUrl(),
         };
     }
     /**
@@ -186,7 +108,7 @@ class SimplePaginator extends Array {
      * page
      */
     getUrl(page) {
-        const qs = (0, qs_1.stringify)(Object.assign({}, this.qs, { page: page < 1 ? 1 : page }));
+        const qs = qs_1.stringify(Object.assign({}, this.qs, { page: page < 1 ? 1 : page }));
         return `${this.url}?${qs}`;
     }
     /**
@@ -219,12 +141,3 @@ class SimplePaginator extends Array {
     }
 }
 exports.SimplePaginator = SimplePaginator;
-/**
- * Naming strategy for the pagination meta keys
- */
-Object.defineProperty(SimplePaginator, "namingStrategy", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: new SnakeCase_1.SnakeCaseNamingStrategy()
-});

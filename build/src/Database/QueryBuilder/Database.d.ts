@@ -1,6 +1,8 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
-import { Knex } from 'knex';
-import { DialectContract, QueryClientContract, TransactionClientContract, DatabaseQueryBuilderContract } from '@ioc:Adonis/Lucid/Database';
+import knex from 'knex';
+import { DialectContract } from '@ioc:Adonis/Lucid/Database';
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+import { DatabaseQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
 import { Chainable } from './Chainable';
 import { SimplePaginator } from '../Paginator/SimplePaginator';
 /**
@@ -25,7 +27,7 @@ export declare class DatabaseQueryBuilder extends Chainable implements DatabaseQ
      */
     protected static macros: {};
     protected static getters: {};
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, keysResolver?: ((columnName: string) => string) | undefined);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, keysResolver?: ((columnName: string) => string) | undefined);
     /**
      * Ensures that we are not executing `update` or `del` when using read only
      * client
@@ -43,11 +45,11 @@ export declare class DatabaseQueryBuilder extends Chainable implements DatabaseQ
     /**
      * Delete rows under the current query
      */
-    del(returning?: string | string[]): this;
+    del(): this;
     /**
      * Alias for [[del]]
      */
-    delete(returning?: string | string[]): this;
+    delete(): this;
     /**
      * Clone the current query builder
      */
@@ -69,7 +71,7 @@ export declare class DatabaseQueryBuilder extends Chainable implements DatabaseQ
     /**
      * Perform update
      */
-    update(column: any, value?: any, returning?: string | string[]): this;
+    update(column: any, value?: any, returning?: string[]): this;
     /**
      * Fetch and return first results from the results set. This method
      * will implicitly set a `limit` on the query
@@ -117,7 +119,7 @@ export declare class DatabaseQueryBuilder extends Chainable implements DatabaseQ
     /**
      * Get sql representation of the query
      */
-    toSQL(): Knex.Sql;
+    toSQL(): knex.Sql;
     /**
      * Implementation of `then` for the promise API
      */

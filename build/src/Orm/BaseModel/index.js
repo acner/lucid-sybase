@@ -27,6 +27,7 @@ const luxon_1 = require("luxon");
 const fast_deep_equal_1 = __importDefault(require("fast-deep-equal"));
 const hooks_1 = require("@poppinss/hooks");
 const utils_1 = require("@poppinss/utils");
+const Config_1 = require("../Config");
 const ModelKeys_1 = require("../ModelKeys");
 const Preloader_1 = require("../Preloader");
 const HasOne_1 = require("../Relations/HasOne");
@@ -36,8 +37,6 @@ const BelongsTo_1 = require("../Relations/BelongsTo");
 const ManyToMany_1 = require("../Relations/ManyToMany");
 const HasManyThrough_1 = require("../Relations/HasManyThrough");
 const utils_2 = require("../../utils");
-const SnakeCase_1 = require("../NamingStrategies/SnakeCase");
-const LazyLoad_1 = require("../Relations/AggregatesLoader/LazyLoad");
 const MANY_RELATIONS = ['hasMany', 'manyToMany', 'hasManyThrough'];
 const DATE_TIME_TYPES = {
     date: 'date',
@@ -52,94 +51,39 @@ function StaticImplements() {
 let BaseModel = BaseModel_1 = class BaseModel {
     constructor() {
         /**
-         * Custom options defined on the model instance that are
-         * passed to the adapter
-         */
-        Object.defineProperty(this, "modelOptions", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Reference to transaction that will be used for performing queries on a given
-         * model instance.
-         */
-        Object.defineProperty(this, "modelTrx", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
          * The transaction listener listens for the `commit` and `rollback` events and
          * cleansup the `$trx` reference
          */
-        Object.defineProperty(this, "transactionListener", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: function listener() {
-                this.modelTrx = undefined;
-            }.bind(this)
-        });
+        this.transactionListener = function listener() {
+            this.modelTrx = undefined;
+        }.bind(this);
         /**
          * When `fill` method is called, then we may have a situation where it
          * removed the values which exists in `original` and hence the dirty
          * diff has to do a negative diff as well
          */
-        Object.defineProperty(this, "fillInvoked", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.fillInvoked = false;
         /**
          * A copy of cached getters
          */
-        Object.defineProperty(this, "cachedGetters", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.cachedGetters = {};
         /**
          * A type only reference to the columns
          */
-        Object.defineProperty(this, "$columns", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.$columns = {};
         /**
          * A copy of attributes that will be sent over to adapter
          */
-        Object.defineProperty(this, "$attributes", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.$attributes = {};
         /**
          * Original represents the properties that already has been
          * persisted or loaded by the adapter.
          */
-        Object.defineProperty(this, "$original", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.$original = {};
         /**
          * Preloaded relationships on the model instance
          */
-        Object.defineProperty(this, "$preloaded", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.$preloaded = {};
         /**
          * Extras are dynamic properties set on the model instance, which
          * are not serialized and neither casted for adapter calls.
@@ -147,12 +91,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
          * This is helpful when adapter wants to load some extra data conditionally
          * and that data must not be persisted back the adapter.
          */
-        Object.defineProperty(this, "$extras", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.$extras = {};
         /**
          * Sideloaded are dynamic properties set on the model instance, which
          * are not serialized and neither casted for adapter calls.
@@ -167,62 +106,29 @@ let BaseModel = BaseModel_1 = class BaseModel {
          * - Sideloaded are shared across multiple model instances created via `$createMultipleFromAdapterResult`.
          * - Sideloaded are passed to the relationships as well.
          */
-        Object.defineProperty(this, "$sideloaded", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.$sideloaded = {};
         /**
          * Persisted means the model has been persisted with the adapter. This will
          * also be true, when model instance is created as a result of fetch
          * call from the adapter.
          */
-        Object.defineProperty(this, "$isPersisted", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.$isPersisted = false;
         /**
          * Once deleted the model instance cannot make calls to the adapter
          */
-        Object.defineProperty(this, "$isDeleted", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.$isDeleted = false;
         /**
          * `$isLocal` tells if the model instance was created locally vs
          * one generated as a result of fetch call from the adapter.
          */
-        Object.defineProperty(this, "$isLocal", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: true
-        });
+        this.$isLocal = true;
         return new Proxy(this, proxyHandler_1.proxyHandler);
-    }
-    /**
-     * Creates a new model instance with payload and adapter options
-     */
-    static newUpWithOptions(payload, options, allowExtraProperties) {
-        const row = new this();
-        row.fill(payload, allowExtraProperties);
-        /**
-         * Pass client options to the newly created row. If row was found
-         * the query builder will set the same options.
-         */
-        row.$setOptionsAndTrx(options);
-        return row;
     }
     /**
      * Helper method for `fetchOrNewUpMany`, `fetchOrCreateMany` and `createOrUpdate`
      * many.
      */
-    static newUpIfMissing(rowObjects, existingRows, keys, mergeAttribute, options, allowExtraProperties) {
+    static newUpIfMissing(rowObjects, existingRows, keys, mergeAttribute, options) {
         /**
          * Return existing or create missing rows in the same order as the original
          * array
@@ -237,14 +143,14 @@ let BaseModel = BaseModel_1 = class BaseModel {
              */
             if (existingRow) {
                 if (mergeAttribute) {
-                    existingRow.merge(rowObject, allowExtraProperties);
+                    existingRow.merge(rowObject);
                 }
                 return existingRow;
             }
             /**
              * Otherwise create a new one
              */
-            return this.newUpWithOptions(rowObject, options, allowExtraProperties);
+            return this.newUpWithOptions(rowObject, options);
         });
     }
     /**
@@ -281,8 +187,8 @@ let BaseModel = BaseModel_1 = class BaseModel {
             return [];
         }
         return adapterResults.reduce((models, row) => {
-            if ((0, utils_2.isObject)(row)) {
-                models.push(this.$createFromAdapterResult(row, sideloadAttributes, options));
+            if (utils_2.isObject(row)) {
+                models.push(this['$createFromAdapterResult'](row, sideloadAttributes, options));
             }
             return models;
         }, []);
@@ -295,12 +201,12 @@ let BaseModel = BaseModel_1 = class BaseModel {
         const descriptor = Object.getOwnPropertyDescriptor(this.prototype, name);
         const column = {
             isPrimary: options.isPrimary || false,
-            columnName: options.columnName || this.namingStrategy.columnName(this, name),
+            columnName: options.columnName || this.$configurator.getColumnName(this, name),
             hasGetter: !!(descriptor && descriptor.get),
             hasSetter: !!(descriptor && descriptor.set),
             serializeAs: options.serializeAs !== undefined
                 ? options.serializeAs
-                : this.namingStrategy.serializedName(this, name),
+                : this.$configurator.getSerializeAsKey(this, name),
             serialize: options.serialize,
             prepare: options.prepare,
             consume: options.consume,
@@ -423,20 +329,6 @@ let BaseModel = BaseModel_1 = class BaseModel {
         return this.$relationsDefinitions.get(name);
     }
     /**
-     * Define a static property on the model using the inherit or
-     * define strategy.
-     *
-     * Inherit strategy will clone the property from the parent model
-     * and will set it on the current model
-     */
-    static $defineProperty(propertyName, defaultValue, strategy) {
-        (0, utils_1.defineStaticProperty)(this, BaseModel_1, {
-            propertyName: propertyName,
-            defaultValue: defaultValue,
-            strategy: strategy,
-        });
-    }
-    /**
      * Boot the model
      */
     static boot() {
@@ -456,63 +348,91 @@ let BaseModel = BaseModel_1 = class BaseModel {
         /**
          * Table name is never inherited from the base model
          */
-        this.$defineProperty('table', this.namingStrategy.tableName(this), 'define');
+        utils_1.defineStaticProperty(this, BaseModel_1, {
+            propertyName: 'table',
+            defaultValue: this.$configurator.getTableName(this),
+            strategy: 'define',
+        });
         /**
          * Inherit primary key or default to "id"
          */
-        this.$defineProperty('primaryKey', 'id', 'inherit');
+        utils_1.defineStaticProperty(this, BaseModel_1, {
+            propertyName: 'primaryKey',
+            defaultValue: 'id',
+            strategy: 'inherit',
+        });
         /**
          * Inherit selfAssignPrimaryKey or default to "false"
          */
-        this.$defineProperty('selfAssignPrimaryKey', false, 'inherit');
+        utils_1.defineStaticProperty(this, BaseModel_1, {
+            propertyName: 'selfAssignPrimaryKey',
+            defaultValue: false,
+            strategy: 'inherit',
+        });
         /**
          * Define the keys property. This allows looking up variations
          * for model keys
          */
-        this.$defineProperty('$keys', {
-            attributesToColumns: new ModelKeys_1.ModelKeys(),
-            attributesToSerialized: new ModelKeys_1.ModelKeys(),
-            columnsToAttributes: new ModelKeys_1.ModelKeys(),
-            columnsToSerialized: new ModelKeys_1.ModelKeys(),
-            serializedToColumns: new ModelKeys_1.ModelKeys(),
-            serializedToAttributes: new ModelKeys_1.ModelKeys(),
-        }, (value) => {
-            return {
-                attributesToColumns: new ModelKeys_1.ModelKeys(Object.assign({}, value.attributesToColumns.all())),
-                attributesToSerialized: new ModelKeys_1.ModelKeys(Object.assign({}, value.attributesToSerialized.all())),
-                columnsToAttributes: new ModelKeys_1.ModelKeys(Object.assign({}, value.columnsToAttributes.all())),
-                columnsToSerialized: new ModelKeys_1.ModelKeys(Object.assign({}, value.columnsToSerialized.all())),
-                serializedToColumns: new ModelKeys_1.ModelKeys(Object.assign({}, value.serializedToColumns.all())),
-                serializedToAttributes: new ModelKeys_1.ModelKeys(Object.assign({}, value.serializedToAttributes.all())),
-            };
+        utils_1.defineStaticProperty(this, BaseModel_1, {
+            propertyName: '$keys',
+            defaultValue: {
+                attributesToColumns: new ModelKeys_1.ModelKeys(),
+                attributesToSerialized: new ModelKeys_1.ModelKeys(),
+                columnsToAttributes: new ModelKeys_1.ModelKeys(),
+                columnsToSerialized: new ModelKeys_1.ModelKeys(),
+                serializedToColumns: new ModelKeys_1.ModelKeys(),
+                serializedToAttributes: new ModelKeys_1.ModelKeys(),
+            },
+            strategy: (value) => {
+                return {
+                    attributesToColumns: new ModelKeys_1.ModelKeys(Object.assign({}, value.attributesToColumns.all())),
+                    attributesToSerialized: new ModelKeys_1.ModelKeys(Object.assign({}, value.attributesToSerialized.all())),
+                    columnsToAttributes: new ModelKeys_1.ModelKeys(Object.assign({}, value.columnsToAttributes.all())),
+                    columnsToSerialized: new ModelKeys_1.ModelKeys(Object.assign({}, value.columnsToSerialized.all())),
+                    serializedToColumns: new ModelKeys_1.ModelKeys(Object.assign({}, value.serializedToColumns.all())),
+                    serializedToAttributes: new ModelKeys_1.ModelKeys(Object.assign({}, value.serializedToAttributes.all())),
+                };
+            },
         });
         /**
          * Define columns
          */
-        this.$defineProperty('$columnsDefinitions', new Map(), 'inherit');
+        utils_1.defineStaticProperty(this, BaseModel_1, {
+            propertyName: '$columnsDefinitions',
+            defaultValue: new Map(),
+            strategy: 'inherit',
+        });
         /**
          * Define computed properties
          */
-        this.$defineProperty('$computedDefinitions', new Map(), 'inherit');
+        utils_1.defineStaticProperty(this, BaseModel_1, {
+            propertyName: '$computedDefinitions',
+            defaultValue: new Map(),
+            strategy: 'inherit',
+        });
         /**
          * Define relationships
          */
-        this.$defineProperty('$relationsDefinitions', new Map(), (value) => {
-            const relations = new Map();
-            value.forEach((relation, key) => {
-                const relationClone = relation.clone(this);
-                relationClone.boot();
-                relations.set(key, relationClone);
-            });
-            return relations;
+        utils_1.defineStaticProperty(this, BaseModel_1, {
+            propertyName: '$relationsDefinitions',
+            defaultValue: new Map(),
+            strategy: (value) => {
+                const relations = new Map();
+                value.forEach((relation, key) => relations.set(key, relation));
+                return relations;
+            },
         });
         /**
          * Define hooks.
          */
-        this.$defineProperty('$hooks', new hooks_1.Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')), (value) => {
-            const hooks = new hooks_1.Hooks();
-            hooks.merge(value);
-            return hooks;
+        utils_1.defineStaticProperty(this, BaseModel_1, {
+            propertyName: '$hooks',
+            defaultValue: new hooks_1.Hooks(this.$container.getResolver(undefined, 'modelHooks', 'App/Models/Hooks')),
+            strategy: (value) => {
+                const hooks = new hooks_1.Hooks();
+                hooks.merge(value);
+                return hooks;
+            },
         });
     }
     /**
@@ -534,7 +454,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
      * attributes to the model instance
      */
     static async create(values, options) {
-        const instance = this.newUpWithOptions(values, options, options?.allowExtraProperties);
+        const instance = this.newUpWithOptions(values, options);
         await instance.save();
         return instance;
     }
@@ -546,14 +466,10 @@ let BaseModel = BaseModel_1 = class BaseModel {
      */
     static async createMany(values, options) {
         const client = this.$adapter.modelConstructorClient(this, options);
-        return (0, utils_2.managedTransaction)(client, async (trx) => {
+        return utils_2.managedTransaction(client, async (trx) => {
             const modelInstances = [];
-            const createOptions = {
-                client: trx,
-                allowExtraProperties: options?.allowExtraProperties,
-            };
             for (let row of values) {
-                const modelInstance = await this.create(row, createOptions);
+                const modelInstance = await this.create(row, { client: trx });
                 modelInstances.push(modelInstance);
             }
             return modelInstances;
@@ -620,6 +536,19 @@ let BaseModel = BaseModel_1 = class BaseModel {
             .exec();
     }
     /**
+     * Creates a new model instance with payload and adapter options
+     */
+    static newUpWithOptions(payload, options) {
+        const row = new this();
+        row.fill(payload);
+        /**
+         * Pass client options to the newly created row. If row was found
+         * the query builder will set the same options.
+         */
+        row.$setOptionsAndTrx(options);
+        return row;
+    }
+    /**
      * Find model instance using a key/value pair or create a
      * new one without persisting it.
      */
@@ -633,7 +562,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
          * Create a new one, if row is not found
          */
         if (!row) {
-            return this.newUpWithOptions(Object.assign({}, searchPayload, savePayload), query.clientOptions, options?.allowExtraProperties);
+            return this.newUpWithOptions(Object.assign({}, searchPayload, savePayload), query.clientOptions);
         }
         return row;
     }
@@ -650,7 +579,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
          * Create a new instance and persist it to the database
          */
         if (!row) {
-            row = this.newUpWithOptions(Object.assign({}, searchPayload, savePayload), query.clientOptions, options?.allowExtraProperties);
+            row = this.newUpWithOptions(Object.assign({}, searchPayload, savePayload), query.clientOptions);
             await row.save();
         }
         return row;
@@ -665,17 +594,17 @@ let BaseModel = BaseModel_1 = class BaseModel {
          * lock on the selected row. This ensures that concurrent reads waits
          * for the existing writes to finish
          */
-        return (0, utils_2.managedTransaction)(client, async (trx) => {
+        return utils_2.managedTransaction(client, async (trx) => {
             const query = this.query({ client: trx }).forUpdate().where(searchPayload);
             let row = await query.first();
             /**
              * Create a new instance or update the existing one (if found)
              */
             if (!row) {
-                row = this.newUpWithOptions(Object.assign({}, searchPayload, updatedPayload), query.clientOptions, options?.allowExtraProperties);
+                row = this.newUpWithOptions(Object.assign({}, searchPayload, updatedPayload), query.clientOptions);
             }
             else {
-                row.merge(updatedPayload, options?.allowExtraProperties);
+                row.merge(updatedPayload);
             }
             await row.save();
             return row;
@@ -689,7 +618,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
         const uniquenessPair = uniqueKeys.map((uniqueKey) => {
             return {
                 key: uniqueKey,
-                value: (0, utils_2.collectValues)(payload, uniqueKey, () => {
+                value: utils_2.collectValues(payload, uniqueKey, () => {
                     throw new utils_1.Exception(`Value for the "${uniqueKey}" is null or undefined inside "fetchOrNewUpMany" payload`);
                 }),
             };
@@ -703,7 +632,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
         /**
          * Return existing rows as it is and create a model instance for missing one's
          */
-        return this.newUpIfMissing(payload, existingRows, uniqueKeys, false, query.clientOptions, options?.allowExtraProperties);
+        return this.newUpIfMissing(payload, existingRows, uniqueKeys, false, query.clientOptions);
     }
     /**
      * Find existing rows or create missing one's. One database call per insert
@@ -715,7 +644,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
         const uniquenessPair = uniqueKeys.map((uniqueKey) => {
             return {
                 key: uniqueKey,
-                value: (0, utils_2.collectValues)(payload, uniqueKey, () => {
+                value: utils_2.collectValues(payload, uniqueKey, () => {
                     throw new utils_1.Exception(`Value for the "${uniqueKey}" is null or undefined inside "fetchOrCreateMany" payload`);
                 }),
             };
@@ -729,11 +658,11 @@ let BaseModel = BaseModel_1 = class BaseModel {
         /**
          * Create model instance for the missing rows
          */
-        const rows = this.newUpIfMissing(payload, existingRows, uniqueKeys, false, query.clientOptions, options?.allowExtraProperties);
+        const rows = this.newUpIfMissing(payload, existingRows, uniqueKeys, false, query.clientOptions);
         /**
          * Perist inside db inside a transaction
          */
-        await (0, utils_2.managedTransaction)(query.client, async (trx) => {
+        await utils_2.managedTransaction(query.client, async (trx) => {
             for (let row of rows) {
                 /**
                  * If transaction `client` was passed, then the row will have
@@ -759,13 +688,13 @@ let BaseModel = BaseModel_1 = class BaseModel {
         const uniquenessPair = uniqueKeys.map((uniqueKey) => {
             return {
                 key: uniqueKey,
-                value: (0, utils_2.collectValues)(payload, uniqueKey, () => {
+                value: utils_2.collectValues(payload, uniqueKey, () => {
                     throw new utils_1.Exception(`Value for the "${uniqueKey}" is null or undefined inside "updateOrCreateMany" payload`);
                 }),
             };
         });
         const client = this.$adapter.modelConstructorClient(this, options);
-        return (0, utils_2.managedTransaction)(client, async (trx) => {
+        return utils_2.managedTransaction(client, async (trx) => {
             /**
              * Find existing rows
              */
@@ -775,7 +704,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
             /**
              * Create model instance for the missing rows
              */
-            const rows = this.newUpIfMissing(payload, existingRows, uniqueKeys, true, query.clientOptions, options?.allowExtraProperties);
+            const rows = this.newUpIfMissing(payload, existingRows, uniqueKeys, true, query.clientOptions);
             for (let row of rows) {
                 await row.save();
             }
@@ -810,7 +739,8 @@ let BaseModel = BaseModel_1 = class BaseModel {
     initiateAutoCreateColumns() {
         const model = this.constructor;
         model.$columnsDefinitions.forEach((column, attributeName) => {
-            const columnType = column.meta?.type;
+            var _a;
+            const columnType = (_a = column.meta) === null || _a === void 0 ? void 0 : _a.type;
             /**
              * Return early when not dealing with date time columns
              */
@@ -836,7 +766,8 @@ let BaseModel = BaseModel_1 = class BaseModel {
     initiateAutoUpdateColumns() {
         const model = this.constructor;
         model.$columnsDefinitions.forEach((column, attributeName) => {
-            const columnType = column.meta?.type;
+            var _a;
+            const columnType = (_a = column.meta) === null || _a === void 0 ? void 0 : _a.type;
             /**
              * Return early when not dealing with date time columns or auto update
              * is not set to true
@@ -881,7 +812,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
         if (!fields) {
             return true;
         }
-        const { pick, omit } = (0, utils_2.normalizeCherryPickObject)(fields);
+        const { pick, omit } = utils_2.normalizeCherryPickObject(fields);
         /**
          * Return false, when under omit array
          */
@@ -927,11 +858,11 @@ let BaseModel = BaseModel_1 = class BaseModel {
             const value = this.$attributes[key];
             const originalValue = this.$original[key];
             let isEqual = true;
-            if (luxon_1.DateTime.isDateTime(value) || luxon_1.DateTime.isDateTime(originalValue)) {
+            if (value instanceof luxon_1.DateTime || originalValue instanceof luxon_1.DateTime) {
                 isEqual = value === originalValue;
             }
             else {
-                isEqual = (0, fast_deep_equal_1.default)(originalValue, value);
+                isEqual = fast_deep_equal_1.default(originalValue, value);
             }
             if (!isEqual) {
                 result[key] = value;
@@ -1167,7 +1098,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
          * the adapter to hydrate models with properties generated
          * as a result of insert or update
          */
-        if ((0, utils_2.isObject)(adapterResult)) {
+        if (utils_2.isObject(adapterResult)) {
             Object.keys(adapterResult).forEach((key) => {
                 /**
                  * Pull the attribute name from the column name, since adapter
@@ -1197,13 +1128,6 @@ let BaseModel = BaseModel_1 = class BaseModel {
                 if (Model.$relationsDefinitions.has(key)) {
                     return;
                 }
-                /**
-                 * Set directly on the model
-                 */
-                if (this.hasOwnProperty(key)) {
-                    this[key] = adapterResult[key];
-                    return;
-                }
                 this.$extras[key] = adapterResult[key];
             });
         }
@@ -1221,9 +1145,9 @@ let BaseModel = BaseModel_1 = class BaseModel {
      * fill isn't allowed, since we disallow setting relationships
      * locally
      */
-    fill(values, allowExtraProperties = false) {
+    fill(values, allowNonExtraProperties = false) {
         this.$attributes = {};
-        this.merge(values, allowExtraProperties);
+        this.merge(values, allowNonExtraProperties);
         this.fillInvoked = true;
         return this;
     }
@@ -1233,12 +1157,12 @@ let BaseModel = BaseModel_1 = class BaseModel {
      * 1. If key is unknown, it will be added to the `extras` object.
      * 2. If key is defined as a relationship, it will be ignored and one must call `$setRelated`.
      */
-    merge(values, allowExtraProperties = false) {
+    merge(values, allowNonExtraProperties = false) {
         const Model = this.constructor;
         /**
          * Merge values with the attributes
          */
-        if ((0, utils_2.isObject)(values)) {
+        if (utils_2.isObject(values)) {
             Object.keys(values).forEach((key) => {
                 const value = values[key];
                 /**
@@ -1266,17 +1190,9 @@ let BaseModel = BaseModel_1 = class BaseModel {
                     return;
                 }
                 /**
-                 * If the property already exists on the model, then set it
-                 * as it is vs defining it as an extra property
-                 */
-                if (this.hasOwnProperty(key)) {
-                    this[key] = value;
-                    return;
-                }
-                /**
                  * Raise error when not instructed to ignore non-existing properties.
                  */
-                if (!allowExtraProperties) {
+                if (!allowNonExtraProperties) {
                     throw new Error(`Cannot define "${key}" on "${Model.name}" model, since it is not defined as a model property`);
                 }
                 this.$extras[key] = value;
@@ -1285,51 +1201,27 @@ let BaseModel = BaseModel_1 = class BaseModel {
         return this;
     }
     /**
-     * Preloads one or more relationships for the current model
+     * A more expressive alias for "this.preload"
      */
     async load(relationName, callback) {
+        return this.preload(relationName, callback);
+    }
+    /**
+     * Preloads one or more relationships for the current model
+     */
+    async preload(relationName, callback) {
         this.ensureIsntDeleted();
-        if (!this.$isPersisted) {
-            throw new utils_1.Exception('Cannot lazy load relationship for an unpersisted model instance');
-        }
-        const Model = this.constructor;
-        const preloader = new Preloader_1.Preloader(Model);
+        const constructor = this.constructor;
+        const preloader = new Preloader_1.Preloader(constructor);
         if (typeof relationName === 'function') {
             relationName(preloader);
         }
         else {
-            preloader.load(relationName, callback);
+            preloader.preload(relationName, callback);
         }
         await preloader
             .sideload(this.$sideloaded)
-            .processAllForOne(this, Model.$adapter.modelClient(this));
-    }
-    /**
-     * @deprecated
-     */
-    async preload(relationName, callback) {
-        process.emitWarning('DeprecationWarning', '"Model.preload()" is deprecated. Use "Model.load()" instead');
-        return this.load(relationName, callback);
-    }
-    /**
-     * Lazy load the relationship aggregate value
-     */
-    loadAggregate(relationName, callback) {
-        this.ensureIsntDeleted();
-        if (!this.$isPersisted) {
-            throw new utils_1.Exception('Cannot lazy load relationship aggregates for an unpersisted model instance');
-        }
-        return new LazyLoad_1.LazyLoadAggregates(this).loadAggregate(relationName, callback);
-    }
-    /**
-     * Lazy load the relationship count value
-     */
-    loadCount(relationName, callback) {
-        this.ensureIsntDeleted();
-        if (!this.$isPersisted) {
-            throw new utils_1.Exception('Cannot lazy load relationship aggregates for an unpersisted model instance');
-        }
-        return new LazyLoad_1.LazyLoadAggregates(this).loadCount(relationName, callback);
+            .processAllForOne(this, constructor.$adapter.modelClient(this));
     }
     /**
      * Perform save on the model instance to commit mutations.
@@ -1370,6 +1262,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
         this.initiateAutoUpdateColumns();
         await Model.$adapter.update(this, this.prepareForAdapter(this.$dirty));
         this.$hydrateOriginals();
+        this.$isPersisted = true;
         await Model.$hooks.exec('after', 'update', this);
         await Model.$hooks.exec('after', 'save', this);
         return this;
@@ -1444,9 +1337,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
             const relationOptions = cherryPick ? cherryPick[relation.serializeAs] : undefined;
             result[relation.serializeAs] = Array.isArray(value)
                 ? value.map((one) => one.serialize(relationOptions))
-                : value === null
-                    ? null
-                    : value.serialize(relationOptions);
+                : value.serialize(relationOptions);
             return result;
         }, {});
     }
@@ -1462,9 +1353,9 @@ let BaseModel = BaseModel_1 = class BaseModel {
             extras = this['serializeExtras']();
         }
         return {
-            ...this.serializeAttributes(cherryPick?.fields, false),
-            ...this.serializeRelations(cherryPick?.relations, false),
-            ...this.serializeComputed(cherryPick?.fields),
+            ...this.serializeAttributes(cherryPick === null || cherryPick === void 0 ? void 0 : cherryPick.fields, false),
+            ...this.serializeRelations(cherryPick === null || cherryPick === void 0 ? void 0 : cherryPick.relations, false),
+            ...this.serializeComputed(cherryPick === null || cherryPick === void 0 ? void 0 : cherryPick.fields),
             ...extras,
         };
     }
@@ -1522,17 +1413,9 @@ let BaseModel = BaseModel_1 = class BaseModel {
             return insertQuery;
         }
         /**
-         * When self assigning the primary key, then we read the primary
-         * value from the originals and the attributes, since we allow
-         * updating primary key itself
-         */
-        const primaryKeyValue = modelConstructor.selfAssignPrimaryKey
-            ? this.$original[primaryKeyColumn]
-            : this.$primaryKeyValue;
-        /**
          * Returning generic query builder for rest of the queries
          */
-        return client.modelQuery(modelConstructor).where(primaryKeyColumn, primaryKeyValue);
+        return client.modelQuery(modelConstructor).where(primaryKeyColumn, this.$primaryKeyValue);
     }
     /**
      * Returns an instance of relationship on the given model
@@ -1540,7 +1423,7 @@ let BaseModel = BaseModel_1 = class BaseModel {
     related(relationName) {
         const Model = this.constructor;
         const relation = Model.$getRelation(relationName);
-        (0, utils_2.ensureRelation)(relationName, relation);
+        utils_2.ensureRelation(relationName, relation);
         relation.boot();
         return relation.client(this, Model.$adapter.modelClient(this));
     }
@@ -1549,35 +1432,39 @@ let BaseModel = BaseModel_1 = class BaseModel {
      */
     async refresh() {
         this.ensureIsntDeleted();
+        const modelConstructor = this.constructor;
+        const { table } = modelConstructor;
+        const primaryKeyColumn = modelConstructor.$keys.attributesToColumns.get(modelConstructor.primaryKey, modelConstructor.primaryKey);
         /**
          * Noop when model instance is not persisted
          */
         if (!this.$isPersisted) {
             return this;
         }
-        const Model = this.constructor;
-        await Model.$adapter.refresh(this);
+        /**
+         * This will occur, when some other part of the application removes
+         * the row
+         */
+        const freshModelInstance = await modelConstructor.find(this.$primaryKeyValue);
+        if (!freshModelInstance) {
+            throw new utils_1.Exception([
+                '"Model.refresh" failed. ',
+                `Unable to lookup "${table}" table where "${primaryKeyColumn}" = ${this.$primaryKeyValue}`,
+            ].join(''));
+        }
+        this.fill(freshModelInstance.$attributes);
+        this.$hydrateOriginals();
         return this;
     }
 };
 /**
- * Naming strategy for model properties
+ * Used to construct defaults for the model
  */
-Object.defineProperty(BaseModel, "namingStrategy", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: new SnakeCase_1.SnakeCaseNamingStrategy()
-});
+BaseModel.$configurator = Config_1.Config;
 /**
  * Query scopes defined on the model
  */
-Object.defineProperty(BaseModel, "$queryScopes", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});
+BaseModel.$queryScopes = {};
 BaseModel = BaseModel_1 = __decorate([
     StaticImplements(),
     __metadata("design:paramtypes", [])

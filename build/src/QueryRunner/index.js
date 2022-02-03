@@ -19,30 +19,10 @@ const QueryReporter_1 = require("../QueryReporter");
  */
 class QueryRunner {
     constructor(client, debug, logData) {
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
-        Object.defineProperty(this, "debug", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: debug
-        });
-        Object.defineProperty(this, "logData", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: logData
-        });
-        Object.defineProperty(this, "reporter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new QueryReporter_1.QueryReporter(this.client, this.debug, this.logData)
-        });
+        this.client = client;
+        this.debug = debug;
+        this.logData = logData;
+        this.reporter = new QueryReporter_1.QueryReporter(this.client, this.debug, this.logData);
     }
     /**
      * Is query dialect using sqlite database or not

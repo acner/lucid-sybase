@@ -1,18 +1,14 @@
 /// <reference path="../../adonis-typings/index.d.ts" />
-/// <reference path="../../adonis-typings/querybuilder.d.ts" />
 /// <reference path="../../adonis-typings/database.d.ts" />
-/// <reference path="../../adonis-typings/model.d.ts" />
-/// <reference path="../../adonis-typings/orm.d.ts" />
-/// <reference path="../../adonis-typings/relations.d.ts" />
 /// <reference types="@adonisjs/logger/build/adonis-typings/logger" />
 /// <reference types="@adonisjs/profiler/build/adonis-typings/profiler" />
 /// <reference types="@adonisjs/events/build/adonis-typings" />
 /// <reference types="@adonisjs/core/build/adonis-typings/health-check" />
-import { Macroable } from 'macroable';
 import { EmitterContract } from '@ioc:Adonis/Core/Event';
 import { LoggerContract } from '@ioc:Adonis/Core/Logger';
 import { ProfilerContract } from '@ioc:Adonis/Core/Profiler';
-import { DatabaseConfig, IsolationLevels, DatabaseContract, QueryClientContract, DatabaseClientOptions, TransactionClientContract, ConnectionManagerContract } from '@ioc:Adonis/Lucid/Database';
+import { DatabaseConfig, DatabaseContract, DatabaseClientOptions, TransactionClientContract, ConnectionManagerContract } from '@ioc:Adonis/Lucid/Database';
+import { QueryClient } from '../QueryClient';
 import { RawBuilder } from './StaticBuilder/Raw';
 import { prettyPrint } from '../Helpers/prettyPrint';
 import { ModelQueryBuilder } from '../Orm/QueryBuilder';
@@ -24,21 +20,11 @@ import { DatabaseQueryBuilder } from './QueryBuilder/Database';
  * Database class exposes the API to manage multiple connections and obtain an instance
  * of query/transaction clients.
  */
-export declare class Database extends Macroable implements DatabaseContract {
+export declare class Database implements DatabaseContract {
     private config;
     private logger;
     private profiler;
     private emitter;
-    /**
-     * Required by macroable
-     */
-    protected static macros: {};
-    protected static getters: {};
-    /**
-     * Reference to self constructor. TypeScript sucks with "this.constructor"
-     * https://github.com/microsoft/TypeScript/issues/4586
-     */
-    Database: typeof Database;
     /**
      * Reference to connections manager
      */
@@ -86,35 +72,35 @@ export declare class Database extends Macroable implements DatabaseContract {
     /**
      * Returns the query client for a given connection
      */
-    connection(connection?: string, options?: DatabaseClientOptions): QueryClientContract | TransactionClientContract;
+    connection(connection?: string, options?: DatabaseClientOptions): TransactionClientContract | QueryClient;
     /**
      * Returns the knex query builder
      */
-    knexQuery(): import("knex").Knex.QueryBuilder<any, any>;
+    knexQuery(): import("knex").QueryBuilder<any, any>;
     /**
      * Returns the knex raw query builder
      */
-    knexRawQuery(sql: string, bindings?: any[]): import("knex").Knex.Raw<any>;
+    knexRawQuery(sql: string, bindings?: any[]): import("knex").Raw<any>;
     /**
      * Returns query builder. Optionally one can define the mode as well
      */
-    query(options?: DatabaseClientOptions): import("@ioc:Adonis/Lucid/Database").DatabaseQueryBuilderContract<any>;
+    query(options?: DatabaseClientOptions): any;
     /**
      * Returns insert query builder. Always has to be dual or write mode and
      * hence it doesn't matter, since in both `dual` and `write` mode,
      * the `write` connection is always used.
      */
-    insertQuery(options?: DatabaseClientOptions): import("@ioc:Adonis/Lucid/Database").InsertQueryBuilderContract<any[]>;
+    insertQuery(options?: DatabaseClientOptions): any;
     /**
      * Returns a query builder instance for a given model.
      */
-    modelQuery(model: any, options?: DatabaseClientOptions): import("@ioc:Adonis/Lucid/Orm").ModelQueryBuilderContract<any, any>;
+    modelQuery(model: any, options?: DatabaseClientOptions): any;
     /**
      * Returns an instance of raw query builder. Optionally one can
      * defined the `read/write` mode in which to execute the
      * query
      */
-    rawQuery(sql: string, bindings?: any, options?: DatabaseClientOptions): import("@ioc:Adonis/Lucid/Database").RawQueryBuilderContract<any>;
+    rawQuery(sql: string, bindings?: any, options?: DatabaseClientOptions): any;
     /**
      * Returns an instance of raw builder. This raw builder queries
      * cannot be executed. Use `rawQuery`, if you want to execute
@@ -128,20 +114,16 @@ export declare class Database extends Macroable implements DatabaseContract {
     /**
      * Returns instance of a query builder and selects the table
      */
-    from(table: any): import("@ioc:Adonis/Lucid/Database").DatabaseQueryBuilderContract<any>;
+    from(table: any): any;
     /**
      * Returns insert query builder and selects the table
      */
-    table(table: any): import("@ioc:Adonis/Lucid/Database").InsertQueryBuilderContract<any>;
+    table(table: any): any;
     /**
      * Returns a transaction instance on the default
      * connection
      */
-    transaction(callback?: {
-        isolationLevel?: IsolationLevels;
-    } | ((trx: TransactionClientContract) => Promise<any>), options?: {
-        isolationLevel?: IsolationLevels;
-    }): Promise<any>;
+    transaction(callback?: (trx: TransactionClientContract) => Promise<any>): Promise<any>;
     /**
      * Invokes `manager.report`
      */
@@ -151,7 +133,7 @@ export declare class Database extends Macroable implements DatabaseContract {
     /**
      * Begin a new global transaction
      */
-    beginGlobalTransaction(connectionName?: string, options?: Omit<DatabaseClientOptions, 'mode'>): Promise<TransactionClientContract>;
+    beginGlobalTransaction(connectionName?: string, options?: Omit<DatabaseClientOptions, 'mode'>): Promise<any>;
     /**
      * Commit an existing global transaction
      */

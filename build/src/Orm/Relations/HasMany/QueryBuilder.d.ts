@@ -1,9 +1,8 @@
 /// <reference path="../../../../adonis-typings/model.d.ts" />
-/// <reference path="../../../../adonis-typings/orm.d.ts" />
-/// <reference path="../../../../adonis-typings/relations.d.ts" />
-import { Knex } from 'knex';
+import knex from 'knex';
+import { LucidRow, LucidModel } from '@ioc:Adonis/Lucid/Model';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidRow, LucidModel, HasManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+import { HasManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations';
 import { HasMany } from './index';
 import { BaseQueryBuilder } from '../Base/QueryBuilder';
 /**
@@ -14,7 +13,7 @@ export declare class HasManyQueryBuilder extends BaseQueryBuilder implements Has
     private parent;
     private relation;
     protected appliedConstraints: boolean;
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, parent: LucidRow | LucidRow[], relation: HasMany);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, parent: LucidRow | LucidRow[], relation: HasMany);
     /**
      * Profiler data for HasMany relationship
      */
@@ -40,9 +39,9 @@ export declare class HasManyQueryBuilder extends BaseQueryBuilder implements Has
      * Same as standard model query builder paginate method. But ensures that
      * it is not invoked during eagerloading
      */
-    paginate(page: number, perPage?: number): Promise<any>;
+    paginate(page: number, perPage?: number): Promise<import("../../../Database/Paginator/SimplePaginator").SimplePaginator>;
     /**
      * Returns the group limit query
      */
-    getGroupLimitQuery(): import("@ioc:Adonis/Lucid/Orm").ModelQueryBuilderContract<LucidModel, LucidRow>;
+    getGroupLimitQuery(): import("@ioc:Adonis/Lucid/Model").ModelQueryBuilderContract<LucidModel, LucidRow>;
 }

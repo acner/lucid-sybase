@@ -1,11 +1,12 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
-import { Knex } from 'knex';
-import { QueryClientContract, RawQueryBuilderContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+import knex from 'knex';
+import { RawQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
 /**
  * Exposes the API to execute raw queries
  */
 export declare class RawQueryBuilder implements RawQueryBuilderContract {
-    knexQuery: Knex.Raw;
+    knexQuery: knex.Raw;
     client: QueryClientContract;
     /**
      * Custom data someone want to send to the profiler and the
@@ -17,7 +18,7 @@ export declare class RawQueryBuilder implements RawQueryBuilderContract {
      * value is inherited from the query client
      */
     private debugQueries;
-    constructor(knexQuery: Knex.Raw, client: QueryClientContract);
+    constructor(knexQuery: knex.Raw, client: QueryClientContract);
     /**
      * Returns the log data
      */
@@ -56,7 +57,7 @@ export declare class RawQueryBuilder implements RawQueryBuilderContract {
     /**
      * Get sql representation of the query
      */
-    toSQL(): Knex.Sql;
+    toSQL(): knex.Sql;
     /**
      * Implementation of `then` for the promise API
      */

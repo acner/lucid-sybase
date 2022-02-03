@@ -15,10 +15,6 @@ export declare class PivotHelpers {
     /**
      * Adds a where pivot condition to the query
      */
-    whereNullPivot(varition: 'or' | 'and' | 'not' | 'orNot', key: string): any;
-    /**
-     * Adds a where pivot condition to the query
-     */
     whereInPivot(varition: 'or' | 'and' | 'not' | 'orNot', key: any, value?: any): any;
     /**
      * Select pivot columns

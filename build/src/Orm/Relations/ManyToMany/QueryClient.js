@@ -9,68 +9,18 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ManyToManyQueryClient = void 0;
-const luxon_1 = require("luxon");
 const QueryBuilder_1 = require("./QueryBuilder");
 const SubQueryBuilder_1 = require("./SubQueryBuilder");
 const utils_1 = require("../../../utils");
-/**
- * ------------------------------------------------------------
- *                    NO_PIVOT_ATTRS
- * ------------------------------------------------------------
- *
- * We do not define pivot attributes during a save/create calls. Coz, one can
- * attach the related instance with multiple parent instance.
- *
- * For example:
- *
- * user.related('skills').save(skill)
- * user1.related('skills').save(skill)
- *
- * As per the above example, the `skill.$extras.pivot_user_id` will have
- * which user id?
- *
- * Same is true with a create call
- *
- * const skill = user.related('skills').create({ name: 'Programming' })
- * user1.related('skills').save(skill)
- */
 /**
  * Query client for executing queries in scope to the defined
  * relationship
  */
 class ManyToManyQueryClient {
     constructor(relation, parent, client) {
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
-        Object.defineProperty(this, "parent", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: parent
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
-    }
-    /**
-     * Returns the timestamps for the pivot row
-     */
-    getPivotTimestamps(updatedAtOnly) {
-        const timestamps = {};
-        if (this.relation.pivotCreatedAtTimestamp && !updatedAtOnly) {
-            timestamps[this.relation.pivotCreatedAtTimestamp] = luxon_1.DateTime.local().toFormat(this.client.dialect.dateTimeFormat);
-        }
-        if (this.relation.pivotUpdatedAtTimestamp) {
-            timestamps[this.relation.pivotUpdatedAtTimestamp] = luxon_1.DateTime.local().toFormat(this.client.dialect.dateTimeFormat);
-        }
-        return timestamps;
+        this.relation = relation;
+        this.parent = parent;
+        this.client = client;
     }
     /**
      * Generate a related query builder
@@ -121,10 +71,9 @@ class ManyToManyQueryClient {
     }
     /**
      * Save related model instance.
-     * @note: Read the "NO_PIVOT_ATTRS" section at the top
      */
-    async save(related, performSync = true, pivotAttributes) {
-        await (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+    async save(related, checkExisting = true) {
+        await utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             /**
              * Persist parent
              */
@@ -135,28 +84,24 @@ class ManyToManyQueryClient {
              */
             related.$trx = trx;
             await related.save();
-            const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related);
-            const pivotPayload = {
-                [relatedForeignKeyValue]: pivotAttributes || {},
-            };
             /**
              * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
              * perform insert
              */
-            if (performSync) {
-                await this.sync(pivotPayload, false, trx);
+            const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related);
+            if (checkExisting) {
+                await this.sync([relatedForeignKeyValue], false, trx);
             }
             else {
-                await this.attach(pivotPayload, trx);
+                await this.attach([relatedForeignKeyValue], trx);
             }
         });
     }
     /**
      * Save many of related model instances
-     * @note: Read the "NO_PIVOT_ATTRS" section at the top
      */
-    async saveMany(related, performSync = true, pivotAttributes) {
-        await (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+    async saveMany(related, checkExisting = true) {
+        await utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             /**
              * Persist parent
              */
@@ -169,16 +114,12 @@ class ManyToManyQueryClient {
                 one.$trx = trx;
                 await one.save();
             }
-            const relatedForeignKeyValues = related.reduce((result, one, index) => {
-                const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(one);
-                result[relatedForeignKeyValue] = pivotAttributes?.[index] || {};
-                return result;
-            }, {});
             /**
              * Sync when checkExisting = true, to avoid duplicate rows. Otherwise
              * perform insert
              */
-            if (performSync) {
+            const relatedForeignKeyValues = related.map((one) => this.relation.getPivotRelatedPair(one)[1]);
+            if (checkExisting) {
                 await this.sync(relatedForeignKeyValues, false, trx);
             }
             else {
@@ -189,49 +130,50 @@ class ManyToManyQueryClient {
     /**
      * Create and persist an instance of related model. Also makes the pivot table
      * entry to create the relationship
-     * @note: Read the "NO_PIVOT_ATTRS" section at the top
      */
-    async create(values, pivotAttributes) {
-        return (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+    async create(values, checkExisting = true) {
+        return utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             this.parent.$trx = trx;
             await this.parent.save();
             /**
              * Create and persist related model instance
              */
             const related = await this.relation.relatedModel().create(values, { client: trx });
-            const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related);
-            const pivotPayload = {
-                [relatedForeignKeyValue]: pivotAttributes || {},
-            };
             /**
-             * Attach new rows
+             * Sync or attach a new one row
              */
-            await this.attach(pivotPayload, trx);
+            const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(related);
+            if (checkExisting) {
+                await this.sync([relatedForeignKeyValue], false, trx);
+            }
+            else {
+                await this.attach([relatedForeignKeyValue], trx);
+            }
             return related;
         });
     }
     /**
      * Create and persist multiple of instances of related model. Also makes
      * the pivot table entries to create the relationship.
-     * @note: Read the "NO_PIVOT_ATTRS" section at the top
      */
-    async createMany(values, pivotAttributes) {
-        return (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+    async createMany(values, checkExisting = true) {
+        return utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             this.parent.$trx = trx;
             await this.parent.save();
             /**
              * Create and persist related model instance
              */
             const related = await this.relation.relatedModel().createMany(values, { client: trx });
-            const relatedForeignKeyValues = related.reduce((result, one, index) => {
-                const [, relatedForeignKeyValue] = this.relation.getPivotRelatedPair(one);
-                result[relatedForeignKeyValue] = pivotAttributes?.[index] || {};
-                return result;
-            }, {});
             /**
-             * Attach new rows
+             * Sync or attach new rows
              */
-            await this.attach(relatedForeignKeyValues, trx);
+            const relatedForeignKeyValues = related.map((one) => this.relation.getPivotRelatedPair(one)[1]);
+            if (checkExisting) {
+                await this.sync(relatedForeignKeyValues, false, trx);
+            }
+            else {
+                await this.attach(relatedForeignKeyValues, trx);
+            }
             return related;
         });
     }
@@ -252,7 +194,7 @@ class ManyToManyQueryClient {
          * Extracting pivot related foreign keys (On the related model)
          */
         const pivotRows = (!hasAttributes ? ids : Object.keys(ids)).map((id) => {
-            return Object.assign(this.getPivotTimestamps(false), hasAttributes ? ids[id] : {}, {
+            return Object.assign({}, hasAttributes ? ids[id] : {}, {
                 [this.relation.pivotForeignKey]: foreignKeyValue,
                 [this.relation.pivotRelatedForeignKey]: id,
             });
@@ -293,13 +235,8 @@ class ManyToManyQueryClient {
      * - Creating the new one's.
      * - Updating the existing one's with different attributes.
      */
-    async sync(ids, 
-    /**
-     * Detach means, do not remove existing rows, that are
-     * missing in this new object/array.
-     */
-    detach = true, trx) {
-        await (0, utils_1.managedTransaction)(trx || this.client, async (transaction) => {
+    async sync(ids, detach = true, trx) {
+        await utils_1.managedTransaction(trx || this.client, async (transaction) => {
             const hasAttributes = !Array.isArray(ids);
             /**
              * An object of pivot rows from from the incoming ids or
@@ -315,7 +252,7 @@ class ManyToManyQueryClient {
             /**
              * We must scope the select query to related foreign key when ids
              * is an array and not an object. This will help in performance
-             * when there are indexes defined on this key
+             * when their are indexes defined on this key
              */
             if (!hasAttributes) {
                 query.select(this.relation.pivotRelatedForeignKey);
@@ -331,7 +268,7 @@ class ManyToManyQueryClient {
              * Find a diff of rows being removed, added or updated in comparison
              * to the existing pivot rows.
              */
-            const { added, updated } = (0, utils_1.syncDiff)(existingPivotRows.reduce((result, row) => {
+            const { added, updated } = utils_1.syncDiff(existingPivotRows.reduce((result, row) => {
                 result[row[this.relation.pivotRelatedForeignKey]] = row;
                 return result;
             }, {}), pivotRows);
@@ -344,10 +281,13 @@ class ManyToManyQueryClient {
              */
             for (let id of Object.keys(updated)) {
                 const attributes = updated[id];
+                if (!attributes) {
+                    return Promise.resolve();
+                }
                 await this.pivotQuery()
                     .useTransaction(transaction)
                     .wherePivot(this.relation.pivotRelatedForeignKey, id)
-                    .update(Object.assign({}, this.getPivotTimestamps(true), attributes));
+                    .update(attributes);
             }
             /**
              * Return early when detach is disabled.

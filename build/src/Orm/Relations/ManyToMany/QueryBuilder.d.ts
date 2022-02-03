@@ -1,9 +1,8 @@
 /// <reference path="../../../../adonis-typings/model.d.ts" />
-/// <reference path="../../../../adonis-typings/orm.d.ts" />
-/// <reference path="../../../../adonis-typings/relations.d.ts" />
-import { Knex } from 'knex';
+import knex from 'knex';
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidModel, LucidRow, ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+import { ManyToManyQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations';
 import { ManyToMany } from './index';
 import { BaseQueryBuilder } from '../Base/QueryBuilder';
 /**
@@ -24,7 +23,7 @@ export declare class ManyToManyQueryBuilder extends BaseQueryBuilder implements 
      */
     get isPivotOnlyQuery(): boolean;
     set isPivotOnlyQuery(pivotOnly: boolean);
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, parent: LucidRow | LucidRow[], relation: ManyToMany);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, parent: LucidRow | LucidRow[], relation: ManyToMany);
     /**
      * Profiler data for ManyToMany relationship
      */
@@ -109,30 +108,6 @@ export declare class ManyToManyQueryBuilder extends BaseQueryBuilder implements 
      */
     andWhereNotInPivot(key: any, value: any): this;
     /**
-     * Same as "whereNull", but for the pivot table only
-     */
-    whereNullPivot(key: string): this;
-    /**
-     * Same as "orWhereNull", but for the pivot table only
-     */
-    orWhereNullPivot(key: string): this;
-    /**
-     * Same as "andWhereNull", but for the pivot table only
-     */
-    andWhereNullPivot(key: string): this;
-    /**
-     * Same as "whereNotNull", but for the pivot table only
-     */
-    whereNotNullPivot(key: string): this;
-    /**
-     * Same as "orWhereNotNull", but for the pivot table only
-     */
-    orWhereNotNullPivot(key: string): this;
-    /**
-     * Same as "andWhereNotNull", but for the pivot table only
-     */
-    andWhereNotNullPivot(key: string): this;
-    /**
      * Select pivot columns
      */
     pivotColumns(columns: string[]): this;
@@ -143,10 +118,9 @@ export declare class ManyToManyQueryBuilder extends BaseQueryBuilder implements 
     /**
      * Paginate through rows inside a given table
      */
-    paginate(page: number, perPage?: number): Promise<any>;
-    exec(): Promise<any[]>;
+    paginate(page: number, perPage?: number): Promise<import("../../../Database/Paginator/SimplePaginator").SimplePaginator>;
     /**
      * Returns the group limit query
      */
-    getGroupLimitQuery(): import("@ioc:Adonis/Lucid/Orm").ModelQueryBuilderContract<LucidModel, LucidRow>;
+    getGroupLimitQuery(): import("@ioc:Adonis/Lucid/Model").ModelQueryBuilderContract<LucidModel, LucidRow>;
 }

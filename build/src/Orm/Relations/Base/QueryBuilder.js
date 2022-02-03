@@ -19,21 +19,11 @@ class BaseQueryBuilder extends QueryBuilder_1.ModelQueryBuilder {
         /**
          * Eager constraints
          */
-        Object.defineProperty(this, "groupConstraints", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: {}
-        });
+        this.groupConstraints = {};
         /**
          * Is query a relationship query obtained using one of the preload methods.
          */
-        Object.defineProperty(this, "isRelatedPreloadQuery", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.isRelatedPreloadQuery = false;
     }
     /**
      * Is query a relationship query obtained using `related('relation').query()`
@@ -58,7 +48,7 @@ class BaseQueryBuilder extends QueryBuilder_1.ModelQueryBuilder {
      * by relationships
      */
     getQueryData() {
-        return Object.assign(this.knexQuery.toSQL(), {
+        return Object.assign(this.toSQL(), {
             connection: this.client.connectionName,
             inTransaction: this.client.isTransaction,
             model: this.model.name,
@@ -136,14 +126,6 @@ class BaseQueryBuilder extends QueryBuilder_1.ModelQueryBuilder {
             this.orderBy(this.groupConstraints.orderBy.column, this.groupConstraints.orderBy.direction);
         }
         return super.toSQL();
-    }
-    /**
-     * Apply constraints before fetching the first
-     * row
-     */
-    first() {
-        this.applyConstraints();
-        return super.first();
     }
     /**
      * Execute query

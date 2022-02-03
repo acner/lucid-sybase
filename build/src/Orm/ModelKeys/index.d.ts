@@ -1,4 +1,4 @@
-import { ModelKeysContract, ModelObject } from '@ioc:Adonis/Lucid/Orm';
+import { ModelKeysContract, ModelObject } from '@ioc:Adonis/Lucid/Model';
 /**
  * Exposes the API to collect, get and resolve model keys
  */

@@ -1,13 +1,11 @@
 /// <reference types="node" />
-/// <reference types="@adonisjs/application/build/adonis-typings" />
 declare module '@ioc:Adonis/Lucid/Migrator' {
     import { EventEmitter } from 'events';
-    import { ApplicationContract } from '@ioc:Adonis/Core/Application';
-    import { FileNode, DatabaseContract } from '@ioc:Adonis/Lucid/Database';
+    import { FileNode } from '@ioc:Adonis/Lucid/Database';
     /**
      * Options accepted by migrator constructor
      */
-    export type MigratorOptions = {
+    type MigratorOptions = {
         direction: 'up';
         connectionName?: string;
         dryRun?: boolean;
@@ -20,7 +18,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     /**
      * Shape of migrated file within migrator
      */
-    export type MigratedFileNode = {
+    type MigratedFileNode = {
         status: 'completed' | 'error' | 'pending';
         queries: string[];
         file: FileNode<unknown>;
@@ -29,7 +27,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     /**
      * Shape of migrated file within migrator
      */
-    export type MigrationListNode = {
+    type MigrationListNode = {
         name: string;
         status: 'pending' | 'migrated' | 'corrupt';
         batch?: number;
@@ -38,7 +36,7 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
     /**
      * Shape of the migrator
      */
-    export interface MigratorContract extends EventEmitter {
+    interface MigratorContract extends EventEmitter {
         dryRun: boolean;
         direction: 'up' | 'down';
         status: 'completed' | 'skipped' | 'pending' | 'error';
@@ -58,11 +56,4 @@ declare module '@ioc:Adonis/Lucid/Migrator' {
         on(event: 'migration:completed', callback: (file: MigratedFileNode) => void): this;
         on(event: 'migration:error', callback: (file: MigratedFileNode) => void): this;
     }
-    /**
-     * Migrator class constructor
-     */
-    const Migrator: {
-        new (db: DatabaseContract, app: ApplicationContract, options: MigratorOptions): MigratorContract;
-    };
-    export default Migrator;
 }

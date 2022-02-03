@@ -1,6 +1,8 @@
-import { Knex } from 'knex';
-import { DBQueryCallback, QueryClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidRow, LucidModel, RelationshipsContract, ModelQueryBuilderContract, RelationQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+import knex from 'knex';
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
+import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { LucidModel, LucidRow, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model';
+import { RelationQueryBuilderContract, RelationshipsContract } from '@ioc:Adonis/Lucid/Relations';
 import { ModelQueryBuilder } from '../../QueryBuilder';
 /**
  * Base query builder for ORM Relationships
@@ -28,7 +30,7 @@ export declare abstract class BaseQueryBuilder extends ModelQueryBuilder impleme
      * Is query a relationship query obtained using one of the preload methods.
      */
     isRelatedPreloadQuery: boolean;
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, relation: RelationshipsContract, dbCallback: DBQueryCallback);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, relation: RelationshipsContract, dbCallback: DBQueryCallback);
     /**
      * Returns the selected columns
      */
@@ -40,7 +42,7 @@ export declare abstract class BaseQueryBuilder extends ModelQueryBuilder impleme
      * Returns the profiler action. Protected, since the class is extended
      * by relationships
      */
-    protected getQueryData(): Knex.Sql & {
+    protected getQueryData(): knex.Sql & {
         connection: string;
         inTransaction: boolean;
         model: string;
@@ -85,12 +87,7 @@ export declare abstract class BaseQueryBuilder extends ModelQueryBuilder impleme
     /**
      * Get query sql
      */
-    toSQL(): Knex.Sql;
-    /**
-     * Apply constraints before fetching the first
-     * row
-     */
-    first(): Promise<any>;
+    toSQL(): knex.Sql;
     /**
      * Execute query
      */

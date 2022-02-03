@@ -1,27 +1,15 @@
-import { SimplePaginatorContract, SimplePaginatorMetaKeys } from '@ioc:Adonis/Lucid/Database';
+import { SimplePaginatorMeta, SimplePaginatorContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
 /**
  * Simple paginator works with the data set provided by the standard
  * `offset` and `limit` based pagination.
  */
 export declare class SimplePaginator extends Array implements SimplePaginatorContract<any> {
+    private rows;
     private totalNumber;
     readonly perPage: number;
     readonly currentPage: number;
     private qs;
     private url;
-    private rows;
-    /**
-     * Naming strategy for the pagination meta keys
-     */
-    static namingStrategy: {
-        paginationMetaKeys(): SimplePaginatorMetaKeys;
-    };
-    /**
-     * Can be defined at per instance level as well
-     */
-    namingStrategy: {
-        paginationMetaKeys(): SimplePaginatorMetaKeys;
-    };
     /**
      * The first page is always 1
      */
@@ -55,7 +43,7 @@ export declare class SimplePaginator extends Array implements SimplePaginatorCon
      * Find if there are enough results to be paginated or not
      */
     readonly hasPages: boolean;
-    constructor(totalNumber: number, perPage: number, currentPage: number, ...rows: any[]);
+    constructor(rows: any[], totalNumber: number, perPage: number, currentPage: number);
     /**
      * A reference to the result rows
      */
@@ -63,13 +51,13 @@ export declare class SimplePaginator extends Array implements SimplePaginatorCon
     /**
      * Returns JSON meta data
      */
-    getMeta(): any;
+    getMeta(): SimplePaginatorMeta;
     /**
      * Returns JSON representation of the paginated
      * data
      */
     toJSON(): {
-        meta: any;
+        meta: SimplePaginatorMeta;
         data: any[];
     };
     /**

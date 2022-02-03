@@ -1,8 +1,11 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
-import { Knex } from 'knex';
-import { LucidRow, LucidModel, ModelObject, PreloaderContract, ModelAdapterOptions, RelationshipsContract, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
-import { DialectContract, DBQueryCallback, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+import knex from 'knex';
+import { LucidModel, ModelObject, ModelAdapterOptions, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model';
+import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations';
+import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { DialectContract, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
 import { Chainable } from '../../Database/QueryBuilder/Chainable';
+import { SimplePaginator } from '../../Database/Paginator/SimplePaginator';
 /**
  * Database query builder exposes the API to construct and run queries for selecting,
  * updating and deleting records.
@@ -13,15 +16,11 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
     /**
      * Sideloaded attributes that will be passed to the model instances
      */
-    protected sideloaded: ModelObject;
+    private sideloaded;
     /**
      * A copy of defined preloads on the model instance
      */
-    protected preloader: PreloaderContract<LucidRow>;
-    /**
-     * A custom callback to transform each model row
-     */
-    protected rowTransformerCallback: (row: LucidRow) => void;
+    private preloader;
     /**
      * Required by macroable
      */
@@ -41,12 +40,12 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
      * Custom data someone want to send to the profiler and the
      * query event
      */
-    protected customReporterData: any;
+    private customReporterData;
     /**
      * Control whether to debug the query or not. The initial
      * value is inherited from the query client
      */
-    protected debugQueries: boolean;
+    private debugQueries;
     /**
      * Self join counter, increments with every "withCount"
      * "has" and "whereHas" queries.
@@ -60,7 +59,7 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
      * Whether or not query is a subquery for `.where` callback
      */
     isChildQuery: boolean;
-    constructor(builder: Knex.QueryBuilder, model: LucidModel, client: QueryClientContract, customFn?: DBQueryCallback);
+    constructor(builder: knex.QueryBuilder, model: LucidModel, client: QueryClientContract, customFn?: DBQueryCallback);
     /**
      * Executes the current query
      */
@@ -94,17 +93,9 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
      */
     reporterData(data: any): this;
     /**
-     * Define a custom callback to transform rows
-     */
-    rowTransformer(callback: (row: LucidRow) => void): this;
-    /**
      * Clone the current query builder
      */
     clone(): ModelQueryBuilder;
-    /**
-     * Define returning columns
-     */
-    returning(columns: any): this;
     /**
      * Define a query to constraint to be defined when condition is truthy
      */
@@ -117,16 +108,7 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
      * Applies the query scopes on the current query builder
      * instance
      */
-    withScopes(callback: (scopes: any) => void): this;
-    /**
-     * Applies the query scopes on the current query builder
-     * instance
-     */
     apply(callback: (scopes: any) => void): this;
-    /**
-     * Define a custom preloader instance for preloading relationships
-     */
-    usePreloader(preloader: PreloaderContract<LucidRow>): this;
     /**
      * Set sideloaded properties to be passed to the model instance
      */
@@ -141,10 +123,6 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
      * will implicitly set a `limit` on the query
      */
     firstOrFail(): Promise<any>;
-    /**
-     * Load aggregate value as a subquery for a relationship
-     */
-    withAggregate(relationName: any, userCallback: any): this;
     /**
      * Get count of a relationship along side the main query results
      */
@@ -214,7 +192,7 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
     /**
      * Perform update
      */
-    update(column: any, value?: any, returning?: string[]): any;
+    update(columns: any): any;
     /**
      * Delete rows under the current query
      */
@@ -222,7 +200,7 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
     /**
      * Alias for [[del]]
      */
-    delete(): any;
+    delete(): this;
     /**
      * Turn on/off debugging for this query
      */
@@ -248,16 +226,11 @@ export declare class ModelQueryBuilder extends Chainable implements ModelQueryBu
     /**
      * Paginate through rows inside a given table
      */
-    paginate(page: number, perPage?: number): Promise<any>;
+    paginate(page: number, perPage?: number): Promise<SimplePaginator>;
     /**
      * Get sql representation of the query
      */
-    toSQL(): Knex.Sql;
-    /**
-     * Get rows back as a plain javascript object and not an array
-     * of model instances
-     */
-    pojo(): this;
+    toSQL(): knex.Sql;
     /**
      * Implementation of `then` for the promise API
      */

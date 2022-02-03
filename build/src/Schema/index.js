@@ -18,53 +18,23 @@ const utils_2 = require("../utils");
  */
 class Schema {
     constructor(db, file, dryRun = false) {
-        Object.defineProperty(this, "db", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: db
-        });
-        Object.defineProperty(this, "file", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: file
-        });
-        Object.defineProperty(this, "dryRun", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: dryRun
-        });
+        this.db = db;
+        this.file = file;
+        this.dryRun = dryRun;
         /**
          * All calls to `schema` and `defer` are tracked to be
          * executed later
          */
-        Object.defineProperty(this, "trackedCalls", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-        });
+        this.trackedCalls = [];
         /**
          * The state of the schema. It cannot be re-executed after completion
          */
-        Object.defineProperty(this, "state", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 'pending'
-        });
+        this.state = 'pending';
         /**
          * Control whether to debug the query or not. The initial
          * value is inherited from the query client
          */
-        Object.defineProperty(this, "debug", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.db.debug
-        });
+        this.debug = this.db.debug;
     }
     /**
      * Returns the schema to build database tables
@@ -97,7 +67,7 @@ class Schema {
             inTransaction: this.db.isTransaction,
             ddl: true,
             ...sql,
-            method: (0, utils_2.getDDLMethod)(sql.sql),
+            method: utils_2.getDDLMethod(sql.sql),
         };
     }
     /**
@@ -183,9 +153,4 @@ exports.Schema = Schema;
 /**
  * Enable/disable transactions for this schema
  */
-Object.defineProperty(Schema, "disableTransactions", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: false
-});
+Schema.disableTransactions = false;

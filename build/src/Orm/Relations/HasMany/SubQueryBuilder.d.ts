@@ -1,12 +1,13 @@
-import { Knex } from 'knex';
+import knex from 'knex';
+import { LucidModel } from '@ioc:Adonis/Lucid/Model';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidModel, RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+import { RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations';
 import { HasMany } from './index';
 import { BaseSubQueryBuilder } from '../Base/SubQueryBuilder';
 export declare class HasManySubQueryBuilder extends BaseSubQueryBuilder implements RelationSubQueryBuilderContract<LucidModel> {
     private relation;
     protected appliedConstraints: boolean;
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, relation: HasMany);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, relation: HasMany);
     /**
      * The keys for constructing the join query
      */

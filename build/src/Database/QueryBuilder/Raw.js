@@ -15,38 +15,13 @@ const QueryRunner_1 = require("../../QueryRunner");
  */
 class RawQueryBuilder {
     constructor(knexQuery, client) {
-        Object.defineProperty(this, "knexQuery", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: knexQuery
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
-        /**
-         * Custom data someone want to send to the profiler and the
-         * query event
-         */
-        Object.defineProperty(this, "customReporterData", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.knexQuery = knexQuery;
+        this.client = client;
         /**
          * Control whether to debug the query or not. The initial
          * value is inherited from the query client
          */
-        Object.defineProperty(this, "debugQueries", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.client.debug
-        });
+        this.debugQueries = this.client.debug;
     }
     /**
      * Returns the log data

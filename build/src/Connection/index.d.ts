@@ -1,8 +1,8 @@
 /// <reference path="../../adonis-typings/index.d.ts" />
 /// <reference types="@adonisjs/logger/build/adonis-typings/logger" />
 /// <reference types="node" />
+import knex from 'knex';
 import { Pool } from 'tarn';
-import { Knex } from 'knex';
 import { EventEmitter } from 'events';
 import { LoggerContract } from '@ioc:Adonis/Core/Logger';
 import { ConnectionConfig, ConnectionContract, ReportNode } from '@ioc:Adonis/Lucid/Database';
@@ -19,16 +19,12 @@ export declare class Connection extends EventEmitter implements ConnectionContra
      * Reference to knex. The instance is created once the `open`
      * method is invoked
      */
-    client?: Knex;
+    client?: knex;
     /**
      * Read client when read/write replicas are defined in the config, otherwise
      * it is a reference to the `client`.
      */
-    readClient?: Knex;
-    /**
-     * Connection dialect name
-     */
-    dialectName: ConnectionContract['dialectName'];
+    readClient?: knex;
     /**
      * A boolean to know if connection operates on read/write
      * replicas

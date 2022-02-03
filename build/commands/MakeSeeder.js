@@ -20,23 +20,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = require("path");
 const standalone_1 = require("@adonisjs/core/build/standalone");
 class MakeSeeder extends standalone_1.BaseCommand {
-    constructor() {
-        super(...arguments);
-        /**
-         * The name of the seeder file.
-         */
-        Object.defineProperty(this, "name", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-    }
     /**
      * Execute command
      */
     async run() {
-        const stub = (0, path_1.join)(__dirname, '..', 'templates', 'seeder.txt');
+        const stub = path_1.join(__dirname, '..', 'templates', 'seeder.txt');
         const path = this.application.rcFile.directories.seeds;
         this.generator
             .addFile(this.name, { pattern: 'pascalcase', form: 'singular' })
@@ -47,18 +35,8 @@ class MakeSeeder extends standalone_1.BaseCommand {
         await this.generator.run();
     }
 }
-Object.defineProperty(MakeSeeder, "commandName", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'make:seeder'
-});
-Object.defineProperty(MakeSeeder, "description", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'Make a new Seeder file'
-});
+MakeSeeder.commandName = 'make:seeder';
+MakeSeeder.description = 'Make a new Seeder file';
 __decorate([
     standalone_1.args.string({ description: 'Name of the seeder class' }),
     __metadata("design:type", String)

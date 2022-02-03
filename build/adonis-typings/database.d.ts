@@ -2,29 +2,22 @@
 /// <reference types="@adonisjs/events/build/adonis-typings" />
 /// <reference types="@adonisjs/profiler/build/adonis-typings/profiler" />
 /// <reference types="node" />
-/// <reference types="@adonisjs/logger/build/adonis-typings/logger" />
 declare module '@ioc:Adonis/Lucid/Database' {
-    import { Knex } from 'knex';
+    import knex from 'knex';
     import { Pool } from 'tarn';
     import { EventEmitter } from 'events';
     import { ConnectionOptions } from 'tls';
     import { EmitterContract } from '@ioc:Adonis/Core/Event';
     import { MacroableConstructorContract } from 'macroable';
-    import { LoggerContract } from '@ioc:Adonis/Core/Logger';
     import { HealthReportEntry } from '@ioc:Adonis/Core/HealthCheck';
-    import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+    import { LucidModel, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model';
     import { ProfilerRowContract, ProfilerContract } from '@ioc:Adonis/Core/Profiler';
-    /**
-     * Same as knex. Need to redefine, as knex doesn't export this
-     * type
-     */
-    export type IsolationLevels = 'read uncommitted' | 'read committed' | 'snapshot' | 'repeatable read' | 'serializable';
+    import { FromTable, RawQueryBindings, RawBuilderContract, RawQueryBuilderContract, SimplePaginatorContract, ReferenceBuilderContract, InsertQueryBuilderContract, DatabaseQueryBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
     /**
      * Migration node returned by the migration source
      * implementation
      */
-    export type FileNode<T> = {
-        filename?: string;
+    export type FileNode<T extends any> = {
         absPath: string;
         name: string;
         getSource: () => T;
@@ -33,7 +26,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Dialect specfic methods
      */
     export interface DialectContract {
-        readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3' | 'sybase';
+        readonly name: 'mssql' | 'mysql' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3'| 'sybase';
         readonly version?: string;
         readonly supportsAdvisoryLocks: boolean;
         readonly dateTimeFormat: string;
@@ -47,12 +40,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Shape of the transaction function to create a new transaction
      */
     export interface TransactionFn {
-        <T>(callback: (trx: TransactionClientContract) => Promise<T>, options?: {
-            isolationLevel?: IsolationLevels;
-        }): Promise<T>;
-        (options?: {
-            isolationLevel?: IsolationLevels;
-        }): Promise<TransactionClientContract>;
+        <T extends any>(callback: (trx: TransactionClientContract) => Promise<T>): Promise<T>;
+        (): Promise<TransactionClientContract>;
     }
     /**
      * Shape of the query client, that is used to retrive instances
@@ -89,37 +78,37 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Returns schema instance for the write client
          */
-        schema: Knex.SchemaBuilder;
+        schema: knex.SchemaBuilder;
         /**
          * Returns the read and write clients
          */
-        getReadClient(): Knex<any, any>;
-        getWriteClient(): Knex<any, any>;
+        getReadClient(): knex<any, any>;
+        getWriteClient(): knex<any, any>;
         /**
          * Returns the query builder for a given model
          */
-        modelQuery<T extends LucidModel, Result = T>(model: T): ModelQueryBuilderContract<T, Result>;
+        modelQuery<T extends LucidModel, Result extends any = T>(model: T): ModelQueryBuilderContract<T, Result>;
         /**
          * Returns the knex query builder instance
          */
-        knexQuery(): Knex.QueryBuilder;
+        knexQuery(): knex.QueryBuilder;
         /**
          * Returns the knex raw query builder instance
          */
-        knexRawQuery(sql: string, bindings?: RawQueryBindings): Knex.Raw;
+        knexRawQuery(sql: string, bindings?: RawQueryBindings): knex.Raw;
         /**
          * Get new query builder instance for select, update and
          * delete calls
          */
-        query<Result = any>(): DatabaseQueryBuilderContract<Result>;
+        query<Result extends any = any>(): DatabaseQueryBuilderContract<Result>;
         /**
          * Get new query builder instance inserts
          */
-        insertQuery<ReturnColumns = any>(): InsertQueryBuilderContract<ReturnColumns[]>;
+        insertQuery<ReturnColumns extends any = any>(): InsertQueryBuilderContract<ReturnColumns[]>;
         /**
          * Get raw query builder instance
          */
-        rawQuery<Result = any>(sql: string, bindings?: RawQueryBindings): RawQueryBuilderContract<Result>;
+        rawQuery<Result extends any = any>(sql: string, bindings?: RawQueryBindings): RawQueryBuilderContract<Result>;
         /**
          * Returns instance of reference builder
          */
@@ -136,9 +125,9 @@ declare module '@ioc:Adonis/Lucid/Database' {
          * Returns columns info for a given table
          */
         columnsInfo(table: string): Promise<{
-            [column: string]: Knex.ColumnInfo;
+            [column: string]: knex.ColumnInfo;
         }>;
-        columnsInfo(table: string, column: string): Promise<Knex.ColumnInfo>;
+        columnsInfo(table: string, column: string): Promise<knex.ColumnInfo>;
         /**
          * Get all tables of the database
          */
@@ -170,7 +159,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * transaction on a single connection
      */
     export interface TransactionClientContract extends QueryClientContract, EventEmitter {
-        knexClient: Knex.Transaction;
+        knexClient: knex.Transaction;
         /**
          * Custom profiler to time queries
          */
@@ -190,8 +179,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Returns the read and write transaction clients
          */
-        getReadClient(): Knex.Transaction<any, any>;
-        getWriteClient(): Knex.Transaction<any, any>;
+        getReadClient(): knex.Transaction<any, any>;
+        getWriteClient(): knex.Transaction<any, any>;
         /**
          * Transaction named events
          */
@@ -199,7 +188,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
         on(event: 'rollback', handler: (client: this) => void): this;
         once(event: 'commit', handler: (client: this) => void): this;
         once(event: 'rollback', handler: (client: this) => void): this;
-        after(event: 'rollback' | 'commit', handler: () => void | Promise<void>): this;
     }
     /**
      * Connection node used by majority of database
@@ -228,7 +216,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
         paths?: string[];
         tableName?: string;
         disableRollbacksInProduction?: boolean;
-        naturalSort?: boolean;
     };
     /**
      * Seeders config
@@ -272,8 +259,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
         client: 'sqlite' | 'sqlite3';
         connection: {
             filename: string;
-            flags?: string[];
-            debug?: boolean;
             mode?: any;
         };
         replicas?: never;
@@ -319,7 +304,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * https://node-postgres.com/features/connecting#programmatic.
      *
      * - `returning` is added by knex and not driver.
-     * - `searchPath` is also added by Knex.
+     * - `searchPath` is also added by knex.
      *
      * Knex forwards all config options to the driver directly. So feel
      * free to define them (let us know, in case any options are missing)
@@ -343,7 +328,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
             };
         };
         searchPath?: string[];
-        wrapIdentifier?: (value: string) => string;
     };
     /**
      * Redshift uses `pg` driver. So config options are same as Postgres.
@@ -357,7 +341,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     };
     /**
      * Please install `oracledb` driver and not the `oracle`. The later is
-     * deprecated. Config is only allowed for `oracledb`.
+     * depreciated. Config is only allowed for `oracledb`.
      *
      * Please refer to the driver configuration docs to learn more about the
      * config values.
@@ -404,17 +388,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
         parseJSON?: boolean;
         options?: {
             encrypt?: boolean;
-            useUTC?: boolean;
-            tdsVersion?: string;
-            appName?: string;
-            abortTransactionOnError?: boolean;
-            trustedConnection?: boolean;
             enableArithAbort?: boolean;
-            isolationLevel?: 'READ_UNCOMMITTED' | 'READ_COMMITTED' | 'REPEATABLE_READ' | 'SERIALIZABLE' | 'SNAPSHOT';
-            maxRetriesOnTransientErrors?: number;
-            multiSubnetFailover?: boolean;
-            packetSize?: number;
-            trustServerCertificate?: boolean;
         };
     };
     export type MssqlConfig = SharedConfigNode & {
@@ -432,27 +406,31 @@ declare module '@ioc:Adonis/Lucid/Database' {
             };
         };
     };
+
+
+
     type SybaseConnectionNode = {
-        servername: string;
-        connectionTimeout?: number;
-        requestTimeout?: number;
-        parseJSON?: boolean;
-    };
-    export type SybaseConfig = SharedConfigNode & {
-        client: 'sybase';
-        version?: string;
-        connection?: SharedConnectionNode & SybaseConnectionNode;
-        replicas?: {
-            write: {
-                connection: SybaseConfig['connection'];
-                pool?: SybaseConfig['pool'];
-            };
-            read: {
-                connection: SybaseConfig['connection'][];
-                pool?: SybaseConfig['pool'];
-            };
-        };
-    };
+      servername: string;
+      connectionTimeout?: number;
+      requestTimeout?: number;
+      parseJSON?: boolean;
+
+  };
+  export type SybaseConfig = SharedConfigNode & {
+      client: 'sybase';
+      version?: string;
+      connection?: SharedConnectionNode & SybaseConnectionNode;
+      replicas?: {
+          write: {
+              connection: SybaseConfig['connection'];
+              pool?: SybaseConfig['pool'];
+          };
+          read: {
+              connection: SybaseConfig['connection'][];
+              pool?: SybaseConfig['pool'];
+          };
+      };
+  };
     /**
      * Connection config must be the config from one of the
      * available dialects
@@ -539,9 +517,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * pooling capabilities.
      */
     export interface ConnectionContract extends EventEmitter {
-        client?: Knex;
-        readClient?: Knex;
-        readonly dialectName: 'mssql' | 'mysql' | 'mysql2' | 'oracledb' | 'postgres' | 'redshift' | 'sqlite3' | 'sybase';
+        client?: knex;
+        readClient?: knex;
         /**
          * Property to find if explicit read/write is enabled
          */
@@ -609,17 +586,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * database connections
      */
     export interface DatabaseContract {
-        Database: MacroableConstructorContract<DatabaseContract> & {
-            new (config: DatabaseConfig, logger: LoggerContract, profiler: ProfilerContract, emitter: EmitterContract): DatabaseContract;
-        };
         DatabaseQueryBuilder: MacroableConstructorContract<DatabaseQueryBuilderContract>;
         InsertQueryBuilder: MacroableConstructorContract<InsertQueryBuilderContract>;
         ModelQueryBuilder: MacroableConstructorContract<ModelQueryBuilderContract<any, any>>;
         SimplePaginator: {
-            namingStrategy: {
-                paginationMetaKeys(): SimplePaginatorMetaKeys;
-            };
-            new <Row>(total: number, perPage: number, currentPage: number, ...rows: Row[]): SimplePaginatorContract<Row>;
+            new <Row extends any>(rows: Row[], total: number, perPage: number, currentPage: number): SimplePaginatorContract<Row>;
         };
         hasHealthChecksEnabled: boolean;
         /**
@@ -647,27 +618,27 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Returns the knex query builder instance
          */
-        knexQuery(): Knex.QueryBuilder;
+        knexQuery(): knex.QueryBuilder;
         /**
          * Returns the knex raw query builder instance
          */
-        knexRawQuery(sql: string, bindings?: RawQueryBindings): Knex.Raw;
+        knexRawQuery(sql: string, bindings?: RawQueryBindings): knex.Raw;
         /**
          * Returns the query builder for a given model
          */
-        modelQuery<T extends LucidModel, Result = T>(model: T, options?: DatabaseClientOptions): ModelQueryBuilderContract<T, Result>;
+        modelQuery<T extends LucidModel, Result extends any = T>(model: T, options?: DatabaseClientOptions): ModelQueryBuilderContract<T, Result>;
         /**
          * Get query builder instance for a given connection.
          */
-        query<Result = any>(options?: DatabaseClientOptions): DatabaseQueryBuilderContract<Result>;
+        query<Result extends any = any>(options?: DatabaseClientOptions): DatabaseQueryBuilderContract<Result>;
         /**
          * Get insert query builder instance for a given connection.
          */
-        insertQuery<ReturnColumns = any>(options?: DatabaseClientOptions): InsertQueryBuilderContract<ReturnColumns[]>;
+        insertQuery<ReturnColumns extends any = any>(options?: DatabaseClientOptions): InsertQueryBuilderContract<ReturnColumns[]>;
         /**
          * Get raw query builder instance
          */
-        rawQuery<Result = any>(sql: string, bindings?: RawQueryBindings, options?: DatabaseClientOptions): RawQueryBuilderContract<Result>;
+        rawQuery<Result extends any = any>(sql: string, bindings?: RawQueryBindings, options?: DatabaseClientOptions): RawQueryBuilderContract<Result>;
         /**
          * Returns instance of reference builder
          */

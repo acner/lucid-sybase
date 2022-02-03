@@ -17,95 +17,17 @@ const utils_1 = require("../../../utils");
  */
 class HasOne {
     constructor(relationName, relatedModel, options, model) {
-        Object.defineProperty(this, "relationName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relationName
-        });
-        Object.defineProperty(this, "relatedModel", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relatedModel
-        });
-        Object.defineProperty(this, "options", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: options
-        });
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: model
-        });
-        Object.defineProperty(this, "type", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 'hasOne'
-        });
-        Object.defineProperty(this, "booted", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
-        Object.defineProperty(this, "serializeAs", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs
-        });
-        /**
-         * Local key is reference to the primary key in the self table
-         * @note: Available after boot is invoked
-         */
-        Object.defineProperty(this, "localKey", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "localKeyColumName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Foreign key is reference to the foreign key in the related table
-         * @note: Available after boot is invoked
-         */
-        Object.defineProperty(this, "foreignKey", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "foreignKeyColumName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.relationName = relationName;
+        this.relatedModel = relatedModel;
+        this.options = options;
+        this.model = model;
+        this.type = 'hasOne';
+        this.booted = false;
+        this.serializeAs = this.options.serializeAs === undefined ? this.relationName : this.options.serializeAs;
         /**
          * Reference to the onQuery hook defined by the user
          */
-        Object.defineProperty(this, "onQueryHook", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.options.onQuery
-        });
-    }
-    /**
-     * Clone relationship instance
-     */
-    clone(parent) {
-        return new HasOne(this.relationName, this.relatedModel, { ...this.options }, parent);
+        this.onQueryHook = this.options.onQuery;
     }
     /**
      * Boot the relationship and ensure that all keys are in
@@ -125,12 +47,12 @@ class HasOne {
             localKey: {
                 model: this.model,
                 key: this.options.localKey ||
-                    this.model.namingStrategy.relationLocalKey(this.type, this.model, relatedModel, this.relationName),
+                    this.model.$configurator.getLocalKey(this.type, this.model, relatedModel),
             },
             foreignKey: {
                 model: relatedModel,
                 key: this.options.foreignKey ||
-                    this.model.namingStrategy.relationForeignKey(this.type, this.model, relatedModel, this.relationName),
+                    this.model.$configurator.getForeignKey(this.type, this.model, relatedModel),
             },
         }).extract();
         /**
@@ -152,8 +74,8 @@ class HasOne {
      * Set related model instance
      */
     setRelated(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
-        if (related === undefined) {
+        utils_1.ensureRelationIsBooted(this);
+        if (!related) {
             return;
         }
         parent.$setRelated(this.relationName, related);
@@ -162,8 +84,8 @@ class HasOne {
      * Push related model instance
      */
     pushRelated(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
-        if (related === undefined) {
+        utils_1.ensureRelationIsBooted(this);
+        if (!related) {
             return;
         }
         parent.$pushRelated(this.relationName, related);
@@ -173,41 +95,48 @@ class HasOne {
      * models.
      */
     setRelatedForMany(parent, related) {
-        (0, utils_1.ensureRelationIsBooted)(this);
-        parent.forEach((parentModel) => {
-            const match = related.find((relatedModel) => {
+        utils_1.ensureRelationIsBooted(this);
+        /**
+         * The related model will always be equal or less than the parent
+         * models. So we loop over them to lower down the number of
+         * iterations.
+         */
+        related.forEach((relatedModel) => {
+            const match = parent.find((parentModel) => {
                 const value = parentModel[this.localKey];
                 return value !== undefined && value === relatedModel[this.foreignKey];
             });
-            this.setRelated(parentModel, match || null);
+            if (match) {
+                this.setRelated(match, relatedModel);
+            }
         });
     }
     /**
      * Returns an instance of query client for invoking queries
      */
     client(parent, client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return new QueryClient_1.HasOneQueryClient(this, parent, client);
     }
     /**
      * Returns eager query instance
      */
     eagerQuery(parent, client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return QueryClient_1.HasOneQueryClient.eagerQuery(client, this, parent);
     }
     /**
      * Returns instance of query builder
      */
     subQuery(client) {
-        (0, utils_1.ensureRelationIsBooted)(this);
+        utils_1.ensureRelationIsBooted(this);
         return QueryClient_1.HasOneQueryClient.subQuery(client, this);
     }
     /**
      * Hydrates values object for persistance.
      */
     hydrateForPersistance(parent, values) {
-        values[this.foreignKey] = (0, utils_1.getValue)(parent, this.localKey, this, 'persist');
+        values[this.foreignKey] = utils_1.getValue(parent, this.localKey, this, 'persist');
     }
 }
 exports.HasOne = HasOne;

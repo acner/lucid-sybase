@@ -1,122 +1,4 @@
 {
-  "name": "@adonisjs/lucid",
-  "version": "17.0.1",
-  "description": "SQL ORM built on top of Active Record pattern",
-  "main": "build/providers/DatabaseProvider.js",
-  "files": [
-    "build/adonis-typings",
-    "build/commands",
-    "build/providers",
-    "build/src",
-    "build/instructions.js",
-    "build/templates",
-    "build/instructions.md"
-  ],
-  "typings": "./build/adonis-typings/index.d.ts",
-  "scripts": {
-    "mrm": "mrm --preset=@adonisjs/mrm-preset",
-    "pretest": "npm run lint",
-    "test:sqlite": "DB=sqlite FORCE_COLOR=true node japaFile.js",
-    "test:mysql": "DB=mysql FORCE_COLOR=true node japaFile.js",
-    "test:mysql_legacy": "DB=mysql_legacy FORCE_COLOR=true node japaFile.js",
-    "test:mssql": "DB=mssql FORCE_COLOR=true node japaFile.js",
-    "test:pg": "DB=pg FORCE_COLOR=true node japaFile.js",
-    "test:docker": "npm run test:sqlite && npm run test:mysql && npm run test:mysql_legacy && npm run test:pg && npm run test:mssql",
-    "test": "docker-compose -f docker-compose.yml -f docker-compose-test.yml build && docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test",
-    "lint": "eslint . --ext=.ts",
-    "clean": "del build",
-    "compile": "npm run lint && npm run clean && tsc && npm run copyfiles",
-    "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
-    "build": "npm run compile",
-    "commit": "git-cz",
-    "release": "np --branch develop",
-    "version": "npm run build",
-    "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/lucid",
-    "format": "prettier --write ."
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/adonisjs/lucid.git"
-  },
-  "author": "virk,adonisjs",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/adonisjs/lucid/issues"
-  },
-  "homepage": "https://github.com/adonisjs/lucid#readme",
-  "dependencies": {
-    "@poppinss/hooks": "^3.0.5",
-    "@poppinss/utils": "^3.2.1",
-    "@types/faker": "^5.5.7",
-    "faker": "^5.5.3",
-    "fast-deep-equal": "^3.1.3",
-    "igniculus": "^1.5.0",
-    "knex": "^0.95.11",
-    "knex-dynamic-connection": "^2.1.1",
-    "luxon": "^2.0.1",
-    "macroable": "^5.1.4",
-    "pretty-hrtime": "^1.0.3",
-    "qs": "^6.10.1",
-    "slash": "^3.0.0"
-  },
-  "peerDependencies": {
-    "@adonisjs/core": "^5.1.0"
-  },
-  "devDependencies": {
-    "@adonisjs/core": "^5.3.4",
-    "@adonisjs/mrm-preset": "^4.1.2",
-    "@adonisjs/repl": "^3.1.6",
-    "@adonisjs/require-ts": "^2.0.8",
-    "@adonisjs/sink": "^5.1.6",
-    "@poppinss/dev-utils": "^1.1.5",
-    "@types/luxon": "^2.0.4",
-    "@types/node": "^16.10.2",
-    "@types/pluralize": "0.0.29",
-    "@types/qs": "^6.9.7",
-    "chance": "^1.1.8",
-    "copyfiles": "^2.4.1",
-    "del-cli": "^4.0.1",
-    "dotenv": "^10.0.0",
-    "eslint": "^7.31.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-adonis": "^1.3.3",
-    "eslint-plugin-prettier": "^4.0.0",
-    "fs-extra": "^10.0.0",
-    "github-label-sync": "^2.0.1",
-    "husky": "^7.0.2",
-    "japa": "^3.1.1",
-    "mrm": "^3.0.9",
-    "mysql": "^2.18.1",
-    "np": "^7.5.0",
-    "pg": "^8.6.0",
-    "sybase": "^1.2.3",
-    "prettier": "^2.4.1",
-    "reflect-metadata": "^0.1.13",
-    "sqlite3": "^5.0.2",
-    "tedious": "^13.0.4",
-    "typescript": "4.4.3"
-  },
-  "publishConfig": {
-    "tag": "latest",
-    "access": "public"
-  },
-  "nyc": {
-    "exclude": [
-      "test"
-    ],
-    "extension": [
-      ".ts"
-    ]
-  },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
-  },
-  "directories": {
-    "test": "test"
-  },
-  "keywords": [],
   "adonisjs": {
     "instructions": "./build/instructions.js",
     "instructionsMd": "./build/instructions.md",
@@ -133,9 +15,141 @@
       ]
     }
   },
+  "author": {
+    "name": "virk,adonisjs"
+  },
+  "bugs": {
+    "url": "https://github.com/adonisjs/lucid/issues"
+  },
+  "bundleDependencies": false,
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "@poppinss/hooks": "^2.0.0",
+    "@poppinss/utils": "^2.5.9",
+    "@types/faker": "^5.1.4",
+    "faker": "^5.1.0",
+    "fast-deep-equal": "^3.1.3",
+    "igniculus": "^1.5.0",
+    "knex": "https://github.com/acner/knex-sybase/archive/f93139345e9bcb7acdb507e32ec9bca2087c77ed.tar.gz",
+    "knex-dynamic-connection": "https://github.com/acner/knex-dynamic-connection-sybase/archive/a07f299dbfa84a123a1070f64b86c36f5718aebe.tar.gz",
+    "luxon": "^1.25.0",
+    "macroable": "^5.0.3",
+    "pluralize": "^8.0.0",
+    "pretty-hrtime": "^1.0.3",
+    "qs": "^6.9.4"
+  },
+  "deprecated": false,
+  "description": "SQL ORM built on top of Active Record pattern",
+  "devDependencies": {
+    "@adonisjs/core": "^5.0.4-preview-rc-2.1",
+    "@adonisjs/mrm-preset": "^2.4.0",
+    "@adonisjs/repl": "^1.1.6",
+    "@adonisjs/require-ts": "^1.1.1",
+    "@adonisjs/sink": "^4.2.2",
+    "@poppinss/dev-utils": "^1.0.11",
+    "@types/dotenv": "^8.2.0",
+    "@types/luxon": "^1.25.0",
+    "@types/node": "^14.14.10",
+    "@types/pluralize": "0.0.29",
+    "chance": "^1.1.7",
+    "commitizen": "^4.2.2",
+    "copyfiles": "^2.4.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "del-cli": "^3.0.1",
+    "dotenv": "^8.2.0",
+    "eslint": "^7.14.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-adonis": "^1.0.15",
+    "eslint-plugin-prettier": "^3.1.4",
+    "fs-extra": "^9.0.1",
+    "github-label-sync": "^2.0.0",
+    "husky": "^4.3.0",
+    "japa": "^3.1.1",
+    "mrm": "^2.5.13",
+    "mssql": "^6.2.3",
+    "sybase": "^1.2.3",
+    "mysql": "^2.18.1",
+    "np": "^7.0.0",
+    "npm-audit-html": "^1.5.0",
+    "pg": "^8.5.1",
+    "prettier": "^2.2.1",
+    "reflect-metadata": "^0.1.13",
+    "sqlite3": "^5.0.0",
+    "typescript": "^4.1.2"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "files": [
+    "build/adonis-typings",
+    "build/commands",
+    "build/providers",
+    "build/src",
+    "build/instructions.js",
+    "build/templates",
+    "build/instructions.md"
+  ],
+  "homepage": "https://github.com/adonisjs/lucid#readme",
+  "husky": {
+    "hooks": {
+      "commit-msg": "node ./node_modules/@adonisjs/mrm-preset/validateCommit/conventional/validate.js",
+      "pre-commit": "npm audit --production --json | ./node_modules/.bin/npm-audit-html && git add npm-audit.html"
+    }
+  },
+  "keywords": [],
+  "license": "MIT",
+  "main": "build/providers/DatabaseProvider.js",
+  "name": "@adonisjs/lucid",
   "np": {
     "contents": ".",
-    "anyBranch": false,
+    "anyBranch": true,
     "yolo": true
-  }
+  },
+  "nyc": {
+    "exclude": [
+      "test"
+    ],
+    "extension": [
+      ".ts"
+    ]
+  },
+  "peerDependencies": {
+    "@adonisjs/core": "^5.0.4-preview-rc"
+  },
+  "publishConfig": {
+    "tag": "alpha",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adonisjs/lucid.git"
+  },
+  "scripts": {
+    "build": "npm run compile",
+    "clean": "del build",
+    "commit": "git-cz",
+    "compile": "npm run lint && npm run clean && tsc && npm run copyfiles",
+    "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
+    "format": "prettier --write .",
+    "lint": "eslint . --ext=.ts",
+    "mrm": "mrm --preset=@adonisjs/mrm-preset",
+    "pretest": "npm run lint",
+    "release": "np",
+    "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/lucid",
+    "test": "docker-compose -f docker-compose.yml -f docker-compose-test.yml build && docker-compose -f docker-compose.yml -f docker-compose-test.yml run --rm test",
+    "test:docker": "npm run test:sqlite && npm run test:mysql && npm run test:mysql_legacy && npm run test:pg && npm run test:mssql",
+    "test:mssql": "DB=mssql node japaFile.js",
+    "test:sybase": "DB=sybase node japaFile.js",
+    "test:mysql": "DB=mysql node japaFile.js",
+    "test:mysql_legacy": "DB=mysql_legacy node japaFile.js",
+    "test:pg": "DB=pg node japaFile.js",
+    "test:sqlite": "DB=sqlite node japaFile.js",
+    "version": "npm run build"
+  },
+  "typings": "./build/adonis-typings/index.d.ts",
+  "version": "10.0.0"
 }

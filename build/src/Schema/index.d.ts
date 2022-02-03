@@ -1,5 +1,5 @@
 /// <reference path="../../adonis-typings/index.d.ts" />
-import { Knex } from 'knex';
+import { SchemaBuilder } from 'knex';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
 import { SchemaContract, DeferCallback } from '@ioc:Adonis/Lucid/Schema';
 /**
@@ -26,7 +26,7 @@ export declare class Schema implements SchemaContract {
     /**
      * Returns the schema to build database tables
      */
-    get schema(): Knex.SchemaBuilder;
+    get schema(): SchemaBuilder;
     /**
      * Control whether to debug the query or not. The initial
      * value is inherited from the query client
@@ -52,11 +52,11 @@ export declare class Schema implements SchemaContract {
     /**
      * Returns raw query for `now`
      */
-    now(precision?: number): Knex.Raw<any>;
+    now(precision?: number): import("knex").Raw<any>;
     /**
      * Instance of raw knex query builder
      */
-    raw(query: string, bindings?: any[]): Knex.Raw<any>;
+    raw(query: string, bindings?: any[]): import("knex").Raw<any>;
     /**
      * Wrapping database calls inside defer ensures that they run
      * in the right order and also they won't be executed when

@@ -7,11 +7,30 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
 var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
@@ -23,40 +42,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const standalone_1 = require("@adonisjs/core/build/standalone");
 const Base_1 = __importDefault(require("./Base"));
 /**
- * The command is meant to migrate the database by executing migrations
+ * The command is meant to migrate the database by execute migrations
  * in `up` direction.
  */
 class Migrate extends Base_1.default {
-    constructor() {
-        super(...arguments);
-        /**
-         * Custom connection for running migrations.
-         */
-        Object.defineProperty(this, "connection", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Force run migrations in production
-         */
-        Object.defineProperty(this, "force", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        /**
-         * Perform dry run
-         */
-        Object.defineProperty(this, "dryRun", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-    }
     /**
      * Handle command
      */
@@ -83,7 +72,7 @@ class Migrate extends Base_1.default {
         /**
          * New up migrator
          */
-        const Migrator = this.application.container.resolveBinding('Adonis/Lucid/Migrator');
+        const { Migrator } = await Promise.resolve().then(() => __importStar(require('../../src/Migrator')));
         const migrator = new Migrator(db, this.application, {
             direction: 'up',
             connectionName: this.connection,
@@ -92,30 +81,15 @@ class Migrate extends Base_1.default {
         await this.runMigrations(migrator, this.connection);
     }
 }
-Object.defineProperty(Migrate, "commandName", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'migration:run'
-});
-Object.defineProperty(Migrate, "description", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: 'Run pending migrations'
-});
+Migrate.commandName = 'migration:run';
+Migrate.description = 'Run pending migrations';
 /**
  * This command loads the application, since we need the runtime
  * to find the migration directories for a given connection
  */
-Object.defineProperty(Migrate, "settings", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {
-        loadApp: true,
-    }
-});
+Migrate.settings = {
+    loadApp: true,
+};
 __decorate([
     standalone_1.flags.string({ description: 'Define a custom database connection', alias: 'c' }),
     __metadata("design:type", String)

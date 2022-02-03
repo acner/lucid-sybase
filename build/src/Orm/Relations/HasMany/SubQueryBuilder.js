@@ -17,21 +17,10 @@ class HasManySubQueryBuilder extends SubQueryBuilder_1.BaseSubQueryBuilder {
                 const subQuery = new HasManySubQueryBuilder($builder, this.client, this.relation);
                 subQuery.isChildQuery = true;
                 userFn(subQuery);
-                subQuery.applyWhere();
             };
         });
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
-        Object.defineProperty(this, "appliedConstraints", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.relation = relation;
+        this.appliedConstraints = false;
     }
     /**
      * The keys for constructing the join query
@@ -46,8 +35,6 @@ class HasManySubQueryBuilder extends SubQueryBuilder_1.BaseSubQueryBuilder {
         const clonedQuery = new HasManySubQueryBuilder(this.knexQuery.clone(), this.client, this.relation);
         this.applyQueryFlags(clonedQuery);
         clonedQuery.appliedConstraints = this.appliedConstraints;
-        clonedQuery.debug(this.debugQueries);
-        clonedQuery.reporterData(this.customReporterData);
         return clonedQuery;
     }
     /**
@@ -69,7 +56,7 @@ class HasManySubQueryBuilder extends SubQueryBuilder_1.BaseSubQueryBuilder {
             this.knexQuery.from(`${relatedTable} as ${this.selfJoinAlias}`);
             tablePrefix = this.selfJoinAlias;
         }
-        this.wrapExisting().where(`${localTable}.${this.relation.localKeyColumName}`, this.client.ref(`${tablePrefix}.${this.relation.foreignKeyColumName}`));
+        this.where(`${localTable}.${this.relation.localKeyColumName}`, this.client.ref(`${tablePrefix}.${this.relation.foreignKeyColumName}`));
     }
 }
 exports.HasManySubQueryBuilder = HasManySubQueryBuilder;

@@ -15,48 +15,11 @@ exports.QueryReporter = void 0;
  */
 class QueryReporter {
     constructor(client, debug, data) {
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
-        Object.defineProperty(this, "debug", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: debug
-        });
-        Object.defineProperty(this, "data", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: data
-        });
-        Object.defineProperty(this, "eventName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 'db:query'
-        });
-        Object.defineProperty(this, "startTime", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "profilerAction", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "isReady", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-        });
+        this.client = client;
+        this.debug = debug;
+        this.data = data;
+        this.eventName = 'db:query';
+        this.isReady = false;
     }
     /**
      * Initiate the hrtime when there are one or more query listeners

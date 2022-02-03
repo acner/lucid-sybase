@@ -1,5 +1,7 @@
-declare module '@ioc:Adonis/Lucid/Orm' {
-    import { RawQuery, OneOrMany, StrictValues, QueryCallback, ChainableContract, RawBuilderContract, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+declare module '@ioc:Adonis/Lucid/Relations' {
+    import { LucidRow, LucidModel, ModelObject, TypedDecorator, ModelAttributes, ModelQueryBuilderContract } from '@ioc:Adonis/Lucid/Model';
+    import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+    import { RawQuery, OneOrMany, StrictValues, QueryCallback, ChainableContract, RawBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
     /**
      * ------------------------------------------------------
      * Helpers
@@ -41,11 +43,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         relatedKey?: string;
         pivotRelatedForeignKey?: string;
         pivotColumns?: string[];
-        pivotTimestamps?: boolean | {
-            createdAt: string | boolean;
-            updatedAt: string | boolean;
-        };
-        serializeAs?: string | null;
+        serializeAs?: string;
         onQuery?(query: Related['builder'] | Related['subQuery']): void;
     };
     /**
@@ -170,7 +168,6 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         readonly model: ParentModel;
         relatedModel(): RelatedModel;
         boot(): void;
-        clone(parent: LucidModel): this;
         /**
          * Get client
          */
@@ -289,7 +286,6 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         readonly pivotForeignKey: string;
         readonly pivotRelatedForeignKey: string;
         readonly pivotTable: string;
-        pivotColumns: string[];
         /**
          * Set related models as a relationship on the parent model
          */
@@ -365,7 +361,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Return a query builder instance of the relationship
          */
-        query<Result = InstanceType<RelatedModel>>(): RelationQueryBuilderContract<RelatedModel, Result>;
+        query<Result extends any = InstanceType<RelatedModel>>(): RelationQueryBuilderContract<RelatedModel, Result>;
     }
     /**
      * Query client for has one relationship
@@ -412,7 +408,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Return a query builder instance of the relationship
          */
-        query<Result = InstanceType<RelatedModel>>(): HasManyQueryBuilderContract<RelatedModel, Result>;
+        query<Result extends any = InstanceType<RelatedModel>>(): HasManyQueryBuilderContract<RelatedModel, Result>;
     }
     /**
      * Query client for belongs to relationship. Uses `associate` and
@@ -435,33 +431,33 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Returns related model query builder instance
          */
-        query<Result = InstanceType<RelatedModel>>(): ManyToManyQueryBuilderContract<RelatedModel, Result>;
+        query<Result extends any = InstanceType<RelatedModel>>(): ManyToManyQueryBuilderContract<RelatedModel, Result>;
         /**
          * Pivot query just targets the pivot table without any joins
          */
-        pivotQuery<Result = any>(): ManyToManyQueryBuilderContract<RelatedModel, Result>;
+        pivotQuery<Result extends any = any>(): ManyToManyQueryBuilderContract<RelatedModel, Result>;
         /**
          * Save related model instance. Sets up FK automatically
          */
-        save(related: InstanceType<RelatedModel>, performSync?: boolean, // defaults to true
-        pivotAttributes?: ModelObject): Promise<void>;
+        save(related: InstanceType<RelatedModel>, checkExisting?: boolean): Promise<void>;
         /**
          * Save many of related model instance. Sets up FK automatically
          */
-        saveMany(related: InstanceType<RelatedModel>[], performSync?: boolean, // defaults to true
-        pivotAttributes?: (ModelObject | undefined)[]): Promise<void>;
+        saveMany(related: InstanceType<RelatedModel>[], checkExisting?: boolean): Promise<void>;
         /**
          * Create related model instance. Sets up FK automatically
          */
-        create(values: Partial<ModelAttributes<InstanceType<RelatedModel>>>, pivotAttributes?: ModelObject): Promise<InstanceType<RelatedModel>>;
+        create(values: Partial<ModelAttributes<InstanceType<RelatedModel>>>, checkExisting?: boolean): Promise<InstanceType<RelatedModel>>;
         /**
          * Create many of related model instances. Sets up FK automatically
          */
-        createMany(values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[], pivotAttributes?: (ModelObject | undefined)[]): Promise<InstanceType<RelatedModel>[]>;
+        createMany(values: Partial<ModelAttributes<InstanceType<RelatedModel>>>[], checkExisting?: boolean): Promise<InstanceType<RelatedModel>[]>;
         /**
          * Attach new pivot rows
          */
-        attach(ids: (string | number)[] | Record<string, ModelObject>, trx?: TransactionClientContract): Promise<void>;
+        attach(ids: (string | number)[] | {
+            [key: string]: ModelObject;
+        }, trx?: TransactionClientContract): Promise<void>;
         /**
          * Detach existing pivot rows
          */
@@ -469,7 +465,9 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Sync pivot rows.
          */
-        sync(ids: (string | number)[] | Record<string, ModelObject>, detach?: boolean, trx?: TransactionClientContract): Promise<void>;
+        sync(ids: (string | number)[] | {
+            [key: string]: ModelObject;
+        }, detach?: boolean, trx?: TransactionClientContract): Promise<void>;
     }
     /**
      * HasMany through client contract. HasMany through doesn't
@@ -480,7 +478,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         /**
          * Return a query builder instance of the relationship
          */
-        query<Result = InstanceType<RelatedModel>>(): HasManyThroughQueryBuilderContract<RelatedModel, Result>;
+        query<Result extends any = InstanceType<RelatedModel>>(): HasManyThroughQueryBuilderContract<RelatedModel, Result>;
     }
     /**
      * ------------------------------------------------------
@@ -505,17 +503,11 @@ declare module '@ioc:Adonis/Lucid/Orm' {
         whereNotInPivot: WhereInPivot<this>;
         orWhereNotInPivot: WhereInPivot<this>;
         andWhereNotInPivot: WhereInPivot<this>;
-        whereNullPivot: WhereNullPivot<this>;
-        orWhereNullPivot: WhereNullPivot<this>;
-        andWhereNullPivot: WhereNullPivot<this>;
-        whereNotNullPivot: WhereNullPivot<this>;
-        orWhereNotNullPivot: WhereNullPivot<this>;
-        andWhereNotNullPivot: WhereNullPivot<this>;
     }
     /**
      * Base query builder for all relations
      */
-    interface RelationQueryBuilderContract<Related extends LucidModel, Result> extends ModelQueryBuilderContract<Related, Result> {
+    interface RelationQueryBuilderContract<Related extends LucidModel, Result extends any> extends ModelQueryBuilderContract<Related, Result> {
         /**
          * Is query a relationship query obtained using `related('relation').query()`
          */
@@ -533,34 +525,28 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * Has many query builder contract
      */
-    interface HasManyQueryBuilderContract<Related extends LucidModel, Result> extends RelationQueryBuilderContract<Related, Result> {
+    interface HasManyQueryBuilderContract<Related extends LucidModel, Result extends any> extends RelationQueryBuilderContract<Related, Result> {
         groupLimit(limit: number): this;
         groupOrderBy(column: string, direction?: 'asc' | 'desc'): this;
     }
     /**
      * Has many query through builder contract
      */
-    interface HasManyThroughQueryBuilderContract<Related extends LucidModel, Result> extends RelationQueryBuilderContract<Related, Result> {
+    interface HasManyThroughQueryBuilderContract<Related extends LucidModel, Result extends any> extends RelationQueryBuilderContract<Related, Result> {
         groupLimit(limit: number): this;
         groupOrderBy(column: string, direction?: 'asc' | 'desc'): this;
     }
     /**
      * Possible signatures for adding a where clause
      */
-    interface WherePivot<Builder> {
+    interface WherePivot<Builder extends any> {
         (key: string, value: StrictValues | ChainableContract): Builder;
         (key: string, operator: string, value: StrictValues | ChainableContract): Builder;
     }
     /**
-     * Possible signatures for adding whereNull clause.
-     */
-    interface WhereNullPivot<Builder> {
-        (key: string): Builder;
-    }
-    /**
      * Possible signatures for adding where in clause.
      */
-    interface WhereInPivot<Builder> {
+    interface WhereInPivot<Builder extends any> {
         (K: string, value: StrictValues[]): Builder;
         (K: string[], value: StrictValues[][]): Builder;
         (k: string, subquery: ChainableContract | QueryCallback<Builder> | RawBuilderContract | RawQuery): Builder;
@@ -570,7 +556,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
      * Shape of many to many query builder. It has few methods over the standard
      * model query builder
      */
-    interface ManyToManyQueryBuilderContract<Related extends LucidModel, Result> extends RelationQueryBuilderContract<Related, Result>, PivotQueryBuilderContract {
+    interface ManyToManyQueryBuilderContract<Related extends LucidModel, Result extends any> extends RelationQueryBuilderContract<Related, Result>, PivotQueryBuilderContract {
         isPivotOnlyQuery: boolean;
         groupLimit(limit: number): this;
         groupOrderBy(column: string, direction?: 'asc' | 'desc'): this;
@@ -619,25 +605,19 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * The withCount function
      */
-    interface WithCount<Model extends LucidRow, Builder> {
+    interface WithCount<Model extends LucidRow, Builder extends any> {
         <Name extends ExtractModelRelations<Model>, RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never>(relation: Name, callback?: (builder: RelatedBuilder) => void): Builder;
-    }
-    /**
-     * The with aggregate function
-     */
-    interface WithAggregate<Model extends LucidRow, Builder> {
-        <Name extends ExtractModelRelations<Model>, RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never>(relation: Name, callback: (builder: RelatedBuilder) => void): Builder;
     }
     /**
      * The has function
      */
-    interface Has<Model extends LucidRow, Builder> {
+    interface Has<Model extends LucidRow, Builder extends any> {
         <Name extends ExtractModelRelations<Model>>(relation: Name, operator?: string, value?: StrictValues | ChainableContract): Builder;
     }
     /**
      * The whereHas function
      */
-    interface WhereHas<Model extends LucidRow, Builder> {
+    interface WhereHas<Model extends LucidRow, Builder extends any> {
         <Name extends ExtractModelRelations<Model>, RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['subQuery'] : never>(relation: Name, callback: (builder: RelatedBuilder) => void, operator?: string, value?: StrictValues | ChainableContract): Builder;
     }
     /**
@@ -648,7 +628,7 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     /**
      * The preload function
      */
-    interface Preload<Model extends LucidRow, Builder> {
+    interface Preload<Model extends LucidRow, Builder extends any> {
         <Name extends ExtractModelRelations<Model>, RelatedBuilder = Model[Name] extends ModelRelations ? Model[Name]['builder'] : never>(relation: Name, callback?: (builder: RelatedBuilder) => void): Builder;
     }
     /**
@@ -657,7 +637,6 @@ declare module '@ioc:Adonis/Lucid/Orm' {
     interface PreloaderContract<Model extends LucidRow> {
         processAllForOne(parent: Model, client: QueryClientContract): Promise<void>;
         processAllForMany(parent: Model[], client: QueryClientContract): Promise<void>;
-        load: Preload<Model, this>;
         preload: Preload<Model, this>;
         debug(debug: boolean): this;
         sideload(values: ModelObject): this;

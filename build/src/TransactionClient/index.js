@@ -10,7 +10,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TransactionClient = void 0;
 const events_1 = require("events");
-const hooks_1 = require("@poppinss/hooks");
 const QueryBuilder_1 = require("../Orm/QueryBuilder");
 const Raw_1 = require("../Database/StaticBuilder/Raw");
 const Raw_2 = require("../Database/QueryBuilder/Raw");
@@ -24,70 +23,20 @@ const Database_1 = require("../Database/QueryBuilder/Database");
 class TransactionClient extends events_1.EventEmitter {
     constructor(knexClient, dialect, connectionName, debug, emitter) {
         super();
-        Object.defineProperty(this, "knexClient", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: knexClient
-        });
-        Object.defineProperty(this, "dialect", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: dialect
-        });
-        Object.defineProperty(this, "connectionName", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: connectionName
-        });
-        Object.defineProperty(this, "debug", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: debug
-        });
-        Object.defineProperty(this, "emitter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: emitter
-        });
+        this.knexClient = knexClient;
+        this.dialect = dialect;
+        this.connectionName = connectionName;
+        this.debug = debug;
+        this.emitter = emitter;
         /**
          * Always true
          */
-        Object.defineProperty(this, "isTransaction", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: true
-        });
+        this.isTransaction = true;
         /**
          * Transactions are always in write mode, since they always needs
          * the primary connection
          */
-        Object.defineProperty(this, "mode", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: 'dual'
-        });
-        /**
-         * The profiler to be used for profiling queries
-         */
-        Object.defineProperty(this, "profiler", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "hooks", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new hooks_1.Hooks()
-        });
+        this.mode = 'dual';
         /**
          * Lucid models listens for transaction events to delete the reference. During
          * testing, it is common to generate more than 10 model instances and hence
@@ -194,18 +143,19 @@ class TransactionClient extends events_1.EventEmitter {
      * Returns reference builder.
      */
     ref(reference) {
-        return new Reference_1.ReferenceBuilder(reference, this.knexClient.client);
+        return new Reference_1.ReferenceBuilder(reference);
     }
     /**
      * Returns another instance of transaction with save point
      */
-    async transaction(callback, options) {
-        const trx = await this.knexClient.transaction(options);
+    async transaction(callback) {
+        var _a;
+        const trx = await this.knexClient.transaction();
         const transaction = new TransactionClient(trx, this.dialect, this.connectionName, this.debug, this.emitter);
         /**
          * Always make sure to pass the profiler down the chain
          */
-        transaction.profiler = this.profiler?.create('trx:begin', { state: 'begin' });
+        transaction.profiler = (_a = this.profiler) === null || _a === void 0 ? void 0 : _a.create('trx:begin', { state: 'begin' });
         /**
          * Self managed transaction
          */
@@ -235,53 +185,38 @@ class TransactionClient extends events_1.EventEmitter {
         return this.insertQuery().table(table);
     }
     /**
-     * Register after commit or rollback hook
-     */
-    after(event, handler) {
-        this.hooks.add('after', event, handler);
-        return this;
-    }
-    /**
      * Commit the transaction
      */
     async commit() {
+        var _a, _b;
         try {
             await this.knexClient.commit();
-            this.profiler?.end({ state: 'commit' });
+            (_a = this.profiler) === null || _a === void 0 ? void 0 : _a.end({ state: 'commit' });
             this.emit('commit', this);
             this.removeAllListeners();
         }
         catch (error) {
-            this.profiler?.end({ state: 'commit' });
+            (_b = this.profiler) === null || _b === void 0 ? void 0 : _b.end({ state: 'commit' });
             this.removeAllListeners();
             throw error;
         }
-        try {
-            await this.hooks.exec('after', 'commit');
-            this.hooks.clear('after');
-        }
-        catch { }
     }
     /**
      * Rollback the transaction
      */
     async rollback() {
+        var _a, _b;
         try {
             await this.knexClient.rollback();
-            this.profiler?.end({ state: 'rollback' });
+            (_a = this.profiler) === null || _a === void 0 ? void 0 : _a.end({ state: 'rollback' });
             this.emit('rollback', this);
             this.removeAllListeners();
         }
         catch (error) {
-            this.profiler?.end({ state: 'rollback' });
+            (_b = this.profiler) === null || _b === void 0 ? void 0 : _b.end({ state: 'rollback' });
             this.removeAllListeners();
             throw error;
         }
-        try {
-            await this.hooks.exec('after', 'rollback');
-            this.hooks.clear('after');
-        }
-        catch { }
     }
     /**
      * Get advisory lock on the selected connection

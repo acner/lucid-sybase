@@ -17,24 +17,9 @@ const SubQueryBuilder_1 = require("./SubQueryBuilder");
  */
 class BelongsToQueryClient {
     constructor(relation, parent, client) {
-        Object.defineProperty(this, "relation", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: relation
-        });
-        Object.defineProperty(this, "parent", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: parent
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
+        this.relation = relation;
+        this.parent = parent;
+        this.client = client;
     }
     /**
      * Generate a query builder instance
@@ -71,7 +56,7 @@ class BelongsToQueryClient {
      * Associate the related model with the parent model
      */
     async associate(related) {
-        await (0, utils_1.managedTransaction)(this.parent.$trx || this.client, async (trx) => {
+        await utils_1.managedTransaction(this.parent.$trx || this.client, async (trx) => {
             related.$trx = trx;
             await related.save();
             this.relation.hydrateForPersistance(this.parent, related);

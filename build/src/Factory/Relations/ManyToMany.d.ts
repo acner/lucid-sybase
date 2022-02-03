@@ -1,4 +1,5 @@
-import { ManyToManyRelationContract, LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Orm';
+import { ManyToManyRelationContract } from '@ioc:Adonis/Lucid/Relations';
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model';
 import { RelationCallback, FactoryModelContract, FactoryRelationContract, FactoryBuilderQueryContract } from '@ioc:Adonis/Lucid/Factory';
 import { BaseRelation } from './Base';
 /**

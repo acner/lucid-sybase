@@ -10,48 +10,20 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.InsertQueryBuilder = void 0;
 const macroable_1 = require("macroable");
-const Raw_1 = require("./Raw");
 const QueryRunner_1 = require("../../QueryRunner");
-const Raw_2 = require("../StaticBuilder/Raw");
-const Reference_1 = require("../StaticBuilder/Reference");
 /**
  * Exposes the API for performing SQL inserts
  */
 class InsertQueryBuilder extends macroable_1.Macroable {
     constructor(knexQuery, client) {
         super();
-        Object.defineProperty(this, "knexQuery", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: knexQuery
-        });
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
-        /**
-         * Custom data someone want to send to the profiler and the
-         * query event
-         */
-        Object.defineProperty(this, "customReporterData", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.knexQuery = knexQuery;
+        this.client = client;
         /**
          * Control whether to debug the query or not. The initial
          * value is inherited from the query client
          */
-        Object.defineProperty(this, "debugQueries", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.client.debug
-        });
+        this.debugQueries = this.client.debug;
     }
     /**
      * Returns the log data
@@ -62,32 +34,6 @@ class InsertQueryBuilder extends macroable_1.Macroable {
             inTransaction: this.client.isTransaction,
             ...this.customReporterData,
         };
-    }
-    /**
-     * Transforms the value to something that knex can internally understand and
-     * handle. It includes.
-     *
-     * 1. Returning the `knexBuilder` for sub queries.
-     * 2. Returning the `knexBuilder` for raw queries.
-     */
-    transformValue(value) {
-        if (value instanceof Reference_1.ReferenceBuilder) {
-            return value.toKnex(this.knexQuery.client);
-        }
-        return this.transformRaw(value);
-    }
-    /**
-     * Returns the underlying knex raw query builder for Lucid raw
-     * query builder
-     */
-    transformRaw(value) {
-        if (value instanceof Raw_1.RawQueryBuilder) {
-            return value['knexQuery'];
-        }
-        if (value instanceof Raw_2.RawBuilder) {
-            return value.toKnex(this.knexQuery.client);
-        }
-        return value;
     }
     /**
      * Define custom reporter data. It will be merged with
@@ -102,13 +48,6 @@ class InsertQueryBuilder extends macroable_1.Macroable {
      */
     table(table) {
         this.knexQuery.table(table);
-        return this;
-    }
-    /**
-     * Define schema for the table
-     */
-    withSchema(schema) {
-        this.knexQuery.withSchema(schema);
         return this;
     }
     /**
@@ -128,22 +67,6 @@ class InsertQueryBuilder extends macroable_1.Macroable {
      * Perform insert query
      */
     insert(columns) {
-        if (columns && Array.isArray(columns)) {
-            columns = columns.map((column) => {
-                return column && typeof column === 'object'
-                    ? Object.keys(column).reduce((result, key) => {
-                        result[key] = this.transformValue(column[key]);
-                        return result;
-                    }, {})
-                    : column;
-            });
-        }
-        else if (columns && typeof columns === 'object') {
-            columns = Object.keys(columns).reduce((result, key) => {
-                result[key] = this.transformValue(columns[key]);
-                return result;
-            }, {});
-        }
         this.knexQuery.insert(columns);
         return this;
     }
@@ -221,15 +144,5 @@ exports.InsertQueryBuilder = InsertQueryBuilder;
 /**
  * Required by macroable
  */
-Object.defineProperty(InsertQueryBuilder, "macros", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});
-Object.defineProperty(InsertQueryBuilder, "getters", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});
+InsertQueryBuilder.macros = {};
+InsertQueryBuilder.getters = {};

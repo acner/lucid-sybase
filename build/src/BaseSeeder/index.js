@@ -11,12 +11,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BaseSeeder = void 0;
 class BaseSeeder {
     constructor(client) {
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
+        this.client = client;
     }
     async run() { }
 }

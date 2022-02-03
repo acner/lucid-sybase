@@ -1,6 +1,8 @@
-import { Knex } from 'knex';
-import { QueryClientContract, DBQueryCallback } from '@ioc:Adonis/Lucid/Database';
-import { LucidModel, RelationshipsContract, RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Orm';
+import knex from 'knex';
+import { LucidModel } from '@ioc:Adonis/Lucid/Model';
+import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
+import { DBQueryCallback } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
+import { RelationshipsContract, RelationSubQueryBuilderContract } from '@ioc:Adonis/Lucid/Relations';
 import { ModelQueryBuilder } from '../../QueryBuilder';
 /**
  * Base query builder for ORM Relationships
@@ -27,7 +29,7 @@ export declare abstract class BaseSubQueryBuilder extends ModelQueryBuilder impl
      * Is query a relationship query obtained using one of the preload methods.
      */
     get isRelatedPreloadQuery(): false;
-    constructor(builder: Knex.QueryBuilder, client: QueryClientContract, relation: RelationshipsContract, dbCallback: DBQueryCallback);
+    constructor(builder: knex.QueryBuilder, client: QueryClientContract, relation: RelationshipsContract, dbCallback: DBQueryCallback);
     /**
      * Returns the selected columns
      */
@@ -51,7 +53,7 @@ export declare abstract class BaseSubQueryBuilder extends ModelQueryBuilder impl
     /**
      * Get query sql
      */
-    toSQL(): Knex.Sql;
+    toSQL(): knex.Sql;
     /**
      * prepare
      */

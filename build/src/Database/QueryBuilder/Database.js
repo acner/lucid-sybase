@@ -28,9 +28,7 @@ const queryCallback = (userFn, keysResolver) => {
          * Other option is to have this method for each instance of the class, but this
          * is waste of resources.
          */
-        const query = new DatabaseQueryBuilder(builder, {}, keysResolver);
-        userFn(query);
-        query['applyWhere']();
+        userFn(new DatabaseQueryBuilder(builder, {}, keysResolver));
     };
 };
 /**
@@ -40,38 +38,13 @@ const queryCallback = (userFn, keysResolver) => {
 class DatabaseQueryBuilder extends Chainable_1.Chainable {
     constructor(builder, client, keysResolver) {
         super(builder, queryCallback, keysResolver);
-        Object.defineProperty(this, "client", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: client
-        });
-        Object.defineProperty(this, "keysResolver", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: keysResolver
-        });
-        /**
-         * Custom data someone want to send to the profiler and the
-         * query event
-         */
-        Object.defineProperty(this, "customReporterData", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.client = client;
+        this.keysResolver = keysResolver;
         /**
          * Control whether to debug the query or not. The initial
          * value is inherited from the query client
          */
-        Object.defineProperty(this, "debugQueries", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: this.client.debug
-        });
+        this.debugQueries = this.client.debug;
     }
     /**
      * Ensures that we are not executing `update` or `del` when using read only
@@ -103,16 +76,16 @@ class DatabaseQueryBuilder extends Chainable_1.Chainable {
     /**
      * Delete rows under the current query
      */
-    del(returning) {
+    del() {
         this.ensureCanPerformWrites();
-        returning ? this.knexQuery.del(returning) : this.knexQuery.del();
+        this.knexQuery.del();
         return this;
     }
     /**
      * Alias for [[del]]
      */
-    delete(returning) {
-        return this.del(returning);
+    delete() {
+        return this.del();
     }
     /**
      * Clone the current query builder
@@ -120,8 +93,6 @@ class DatabaseQueryBuilder extends Chainable_1.Chainable {
     clone() {
         const clonedQuery = new DatabaseQueryBuilder(this.knexQuery.clone(), this.client);
         this.applyQueryFlags(clonedQuery);
-        clonedQuery.debug(this.debugQueries);
-        this.customReporterData && clonedQuery.reporterData(this.customReporterData);
         return clonedQuery;
     }
     /**
@@ -145,7 +116,6 @@ class DatabaseQueryBuilder extends Chainable_1.Chainable {
      * can be clubbed with `update` as well
      */
     increment(column, counter) {
-        this.ensureCanPerformWrites();
         this.knexQuery.increment(this.resolveKey(column, true), counter);
         return this;
     }
@@ -154,7 +124,6 @@ class DatabaseQueryBuilder extends Chainable_1.Chainable {
      * can be clubbed with `update` as well
      */
     decrement(column, counter) {
-        this.ensureCanPerformWrites();
         this.knexQuery.decrement(this.resolveKey(column, true), counter);
         return this;
     }
@@ -237,7 +206,6 @@ class DatabaseQueryBuilder extends Chainable_1.Chainable {
      * Returns SQL query as a string
      */
     toQuery() {
-        this.applyWhere();
         return this.knexQuery.toQuery();
     }
     /**
@@ -251,7 +219,6 @@ class DatabaseQueryBuilder extends Chainable_1.Chainable {
      * Executes the query
      */
     async exec() {
-        this.applyWhere();
         return new QueryRunner_1.QueryRunner(this.client, this.debugQueries, this.getQueryData()).run(this.knexQuery);
     }
     /**
@@ -272,13 +239,12 @@ class DatabaseQueryBuilder extends Chainable_1.Chainable {
         const aggregates = await countQuery.exec();
         const total = this.hasGroupBy ? aggregates.length : aggregates[0].total;
         const results = total > 0 ? await this.forPage(page, perPage).exec() : [];
-        return new SimplePaginator_1.SimplePaginator(total, perPage, page, ...results);
+        return new SimplePaginator_1.SimplePaginator(results, total, perPage, page);
     }
     /**
      * Get sql representation of the query
      */
     toSQL() {
-        this.applyWhere();
         return this.knexQuery.toSQL();
     }
     /**
@@ -310,15 +276,5 @@ exports.DatabaseQueryBuilder = DatabaseQueryBuilder;
 /**
  * Required by macroable
  */
-Object.defineProperty(DatabaseQueryBuilder, "macros", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});
-Object.defineProperty(DatabaseQueryBuilder, "getters", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: {}
-});
+DatabaseQueryBuilder.macros = {};
+DatabaseQueryBuilder.getters = {};

@@ -1,7 +1,7 @@
 import MigrationsBase from './Base';
 /**
- * The command is meant to migrate the database by executing migrations
- * in `down` direction.
+ * The command is meant to migrate the database by execute migrations
+ * in `up` direction.
  */
 export default class Migrate extends MigrationsBase {
     static commandName: string;

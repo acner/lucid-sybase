@@ -1,15 +1,14 @@
 /// <reference path="../../../adonis-typings/index.d.ts" />
-import { Knex } from 'knex';
-import { ReferenceBuilderContract } from '@ioc:Adonis/Lucid/Database';
+import knex from 'knex';
+import { ReferenceBuilderContract } from '@ioc:Adonis/Lucid/DatabaseQueryBuilder';
 /**
  * Reference builder to create SQL reference values
  */
 export declare class ReferenceBuilder implements ReferenceBuilderContract {
     private ref;
-    private client;
     private schema;
     private alias;
-    constructor(ref: string, client: Knex.Client);
+    constructor(ref: string);
     /**
      * Define schema
      */
@@ -21,5 +20,5 @@ export declare class ReferenceBuilder implements ReferenceBuilderContract {
     /**
      * Converts reference to knex
      */
-    toKnex(client?: Knex.Client): Knex.Ref<any, any>;
+    toKnex(client: knex.Client): knex.Ref<any, any>;
 }

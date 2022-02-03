@@ -1,6 +1,6 @@
 /// <reference types="node" />
-declare module '@ioc:Adonis/Lucid/Database' {
-    import { Knex } from 'knex';
+declare module '@ioc:Adonis/Lucid/DatabaseQueryBuilder' {
+    import knex from 'knex';
     import { DialectContract, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
     /**
      * Extracted from ts-essentials
@@ -16,11 +16,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Allowing a generic value along with raw query instance or a subquery
      * instance
      */
-    type ValueWithSubQueries<T> = T | ChainableContract | RawQuery;
+    type ValueWithSubQueries<T extends any> = T | ChainableContract | RawQuery;
     /**
      * Acceptable raw queries
      */
-    type RawQuery = RawBuilderContract | RawQueryBuilderContract | Knex.Raw | Knex.RawQueryBuilder;
+    type RawQuery = RawBuilderContract | RawQueryBuilderContract;
     /**
      * A known set of values allowed when defining values for different
      * clauses
@@ -48,19 +48,19 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Query callback is used to write wrapped queries. We get rid of `this` from
      * knex, since it makes everything confusing.
      */
-    type QueryCallback<Builder> = (builder: Builder) => void;
+    type QueryCallback<Builder extends any> = (builder: Builder) => void;
     /**
      * Shape of the function accepted by the chainable query builder to
      * pass lucid query builder to wrapped callbacks like
      * `.where(function () {})`.
      *
      * - This method will accept the wrapped callback
-     * - Return a new method, that is accepted by Knex.
+     * - Return a new method, that is accepted by knex.
      * - When knex calls that method, this method will invoke the user wrapped
      *   callback, but instead of passing the knex query builder, it will
      *   pass the appropriate lucid query builder.
      */
-    type DBQueryCallback = (userFn: QueryCallback<ChainableContract>, keysResolver?: (columnName: string) => string) => (builder: Knex.QueryBuilder) => void;
+    type DBQueryCallback = (userFn: QueryCallback<ChainableContract>, keysResolver?: (columnName: string) => string) => (builder: knex.QueryBuilder) => void;
     /**
      * Possible signatures for a select method on database query builder.
      */
@@ -73,11 +73,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * An array of values with subqueries
          */
-        (columns: ValueWithSubQueries<string | number>[]): Builder;
+        (columns: ValueWithSubQueries<string>[]): Builder;
         /**
          * A spread of array arguments
          */
-        (...columns: ValueWithSubQueries<string | number>[]): Builder;
+        (...columns: ValueWithSubQueries<string>[]): Builder;
         /**
          * Wildcard selector.
          */
@@ -98,8 +98,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Key-value pair. The value can also be a subquery
          */
-        (key: string | RawQuery, value: StrictValues | ChainableContract): Builder;
-        (key: string | RawQuery, operator: string, value: StrictValues | ChainableContract): Builder;
+        (key: string, value: StrictValues | ChainableContract): Builder;
+        (key: string, operator: string, value: StrictValues | ChainableContract): Builder;
     }
     /**
      * Possible signatures for adding a where column clause
@@ -108,8 +108,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Key-value pair.
          */
-        (column: string | RawQuery, comparisonColumn: string): Builder;
-        (column: string | RawQuery, operator: string, comparisonColumn: string): Builder;
+        (column: string, comparisonColumn: string): Builder;
+        (column: string, operator: string, comparisonColumn: string): Builder;
     }
     /**
      * Possible signatures for adding where in clause.
@@ -118,7 +118,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Column name and array of values
          */
-        (K: string | RawQuery, value: StrictValues[]): Builder;
+        (K: string, value: StrictValues[]): Builder;
         /**
          * Column names and array of values as an 2d array
          */
@@ -127,7 +127,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
          * Column name with a subquery for a callback that yields an array of
          * results
          */
-        (k: string | RawQuery, subquery: ChainableContract | QueryCallback<Builder> | RawBuilderContract | RawQuery): Builder;
+        (k: string, subquery: ChainableContract | QueryCallback<Builder> | RawBuilderContract | RawQuery): Builder;
         /**
          * Column names along with a subquery that yields an array
          */
@@ -137,7 +137,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Possible signatures for adding whereNull clause.
      */
     interface WhereNull<Builder extends ChainableContract> {
-        (key: string | RawQuery): Builder;
+        (key: string): Builder;
     }
     /**
      * Possibles signatures for adding a where exists clause
@@ -152,7 +152,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Accept any string as a key for supporting prefix columns
          */
-        (key: string | RawQuery, value: [StrictValues | ChainableContract, StrictValues | ChainableContract]): Builder;
+        (key: string, value: [StrictValues | ChainableContract, StrictValues | ChainableContract]): Builder;
     }
     /**
      * Possible signatures for join query
@@ -177,7 +177,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
          * Join with a callback. The callback receives an array of join class from
          * knex directly.
          */
-        (table: string, callback: Knex.JoinCallback): Builder;
+        (table: string, callback: knex.JoinCallback): Builder;
     }
     /**
      * Possible signatures for a distinct clause
@@ -255,7 +255,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Key operator and value. Value can be a subquery as well
          */
-        (key: string | RawQuery, operator: string, value: StrictValues | ChainableContract | RawBuilderContract | RawQuery): Builder;
+        (key: string, operator: string, value: StrictValues | ChainableContract | RawBuilderContract | RawQuery): Builder;
     }
     /**
      * Possible signatures for `having in` clause.
@@ -265,11 +265,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
          * Key and an array of literal values, raw queries or
          * subqueries.
          */
-        (key: string | RawQuery, value: (StrictValues | ChainableContract | RawBuilderContract | RawQuery)[]): Builder;
+        (key: string, value: (StrictValues | ChainableContract | RawBuilderContract | RawQuery)[]): Builder;
         /**
          * Key, along with a query callback
          */
-        (key: string | RawQuery, callback: QueryCallback<Builder>): Builder;
+        (key: string, callback: QueryCallback<Builder>): Builder;
     }
     /**
      * Possible signatures for `having null` clause
@@ -316,11 +316,11 @@ declare module '@ioc:Adonis/Lucid/Database' {
          * Accepts an array of object of named key/value pair and returns an array
          * of Generic return columns.
          */
-        (values: Dictionary<any, string>, returning?: OneOrMany<string>): Builder;
+        (values: Dictionary<any, string>, returning?: string | string[]): Builder;
         /**
          * Accepts a key-value pair to update.
          */
-        (column: string, value: any, returning?: OneOrMany<string>): Builder;
+        (column: string, value: any, returning?: string | string[]): Builder;
     }
     /**
      * Possible signatures for incrementing/decrementing
@@ -348,8 +348,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * methods to execute a query.
      */
     interface ChainableContract {
-        knexQuery: Knex.QueryBuilder;
-        columns: (string | Knex.QueryBuilder | Knex.RawQueryBuilder)[];
+        knexQuery: knex.QueryBuilder;
+        columns: (string | knex.QueryBuilder | knex.RawQueryBuilder)[];
         subQueryAlias?: string;
         hasAggregates: boolean;
         hasGroupBy: boolean;
@@ -357,7 +357,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
         keysResolver?: (columnName: string) => string;
         from: FromTable<this>;
         select: DatabaseQueryBuilderSelect<this>;
-        wrapExisting(): this;
         where: Where<this>;
         orWhere: Where<this>;
         andWhere: Where<this>;
@@ -478,8 +477,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Shape of the raw query that can also be passed as a value to
      * other queries
      */
-    interface RawQueryBuilderContract<Result = any> extends ExcutableQueryBuilderContract<Result> {
-        knexQuery: Knex.Raw;
+    interface RawQueryBuilderContract<Result extends any = any> extends ExcutableQueryBuilderContract<Result> {
+        knexQuery: knex.Raw;
         client: QueryClientContract;
         wrap(before: string, after: string): this;
     }
@@ -489,34 +488,33 @@ declare module '@ioc:Adonis/Lucid/Database' {
     interface ReferenceBuilderContract {
         withSchema(name: string): this;
         as(name: string): this;
-        toKnex(client: Knex.Client): Knex.Ref<string, any>;
+        toKnex(client: knex.Client): knex.Ref<string, any>;
     }
     /**
      * Static raw builder
      */
     interface RawBuilderContract {
         wrap(before: string, after: string): this;
-        toKnex(client: Knex.Client): Knex.Raw;
+        toKnex(client: knex.Client): knex.Raw;
     }
     /**
-     * The keys for the simple paginator meta
-     * data
+     * Paginator Metadata
      */
-    type SimplePaginatorMetaKeys = {
-        total: string;
-        perPage: string;
-        currentPage: string;
-        lastPage: string;
-        firstPage: string;
-        firstPageUrl: string;
-        lastPageUrl: string;
-        nextPageUrl: string;
-        previousPageUrl: string;
+    type SimplePaginatorMeta = {
+        total: number;
+        per_page: number;
+        current_page: number;
+        last_page: number;
+        first_page: number;
+        first_page_url: string;
+        last_page_url: string;
+        next_page_url: string | null;
+        previous_page_url: string | null;
     };
     /**
      * Shape of the simple paginator that works with offset and limit
      */
-    interface SimplePaginatorContract<Result> extends Array<Result> {
+    interface SimplePaginatorContract<Result extends any> extends Array<Result> {
         all(): Result[];
         readonly firstPage: number;
         readonly perPage: number;
@@ -527,15 +525,12 @@ declare module '@ioc:Adonis/Lucid/Database' {
         readonly isEmpty: boolean;
         readonly total: number;
         readonly hasTotal: boolean;
-        namingStrategy: {
-            paginationMetaKeys(): SimplePaginatorMetaKeys;
-        };
         baseUrl(url: string): this;
         queryString(values: {
             [key: string]: any;
         }): this;
         getUrl(page: number): string;
-        getMeta(): any;
+        getMeta(): SimplePaginatorMeta;
         getNextPageUrl(): string | null;
         getPreviousPageUrl(): string | null;
         getUrlsForRange(start: number, end: number): {
@@ -544,7 +539,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
             isActive: boolean;
         }[];
         toJSON(): {
-            meta: any;
+            meta: SimplePaginatorMeta;
             data: Result[];
         };
     }
@@ -552,9 +547,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
      * Database query builder exposes the API to construct SQL query using fluent
      * chainable API
      */
-    interface DatabaseQueryBuilderContract<Result = Dictionary<any, string>> extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
+    interface DatabaseQueryBuilderContract<Result extends any = Dictionary<any, string>> extends ChainableContract, ExcutableQueryBuilderContract<Result[]> {
         client: QueryClientContract;
-        returning: Returning<this>;
         /**
          * Clone current query
          */
@@ -570,8 +564,8 @@ declare module '@ioc:Adonis/Lucid/Database' {
         /**
          * Perform delete operation
          */
-        del(returning?: OneOrMany<string>): this;
-        delete(returning?: OneOrMany<string>): this;
+        del(): this;
+        delete(): this;
         /**
          * A shorthand to define limit and offset based upon the
          * current page
@@ -595,7 +589,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
         min: Aggregate<this>;
         max: Aggregate<this>;
         sum: Aggregate<this>;
-        sumDistinct: Aggregate<this>;
         avg: Aggregate<this>;
         avgDistinct: Aggregate<this>;
         /**
@@ -612,14 +605,13 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * Insert query builder to perform database inserts.
      */
-    interface InsertQueryBuilderContract<Result = any> extends ExcutableQueryBuilderContract<Result> {
-        knexQuery: Knex.QueryBuilder;
+    interface InsertQueryBuilderContract<Result extends any = any> extends ExcutableQueryBuilderContract<Result> {
+        knexQuery: knex.QueryBuilder;
         client: QueryClientContract;
         /**
          * Table for the insert query
          */
         table(table: string): this;
-        withSchema(schema: string): this;
         /**
          * Define returning columns
          */
@@ -636,7 +628,7 @@ declare module '@ioc:Adonis/Lucid/Database' {
     /**
      * A executable query builder will always have these methods on it.
      */
-    interface ExcutableQueryBuilderContract<Result> extends Promise<Result> {
+    interface ExcutableQueryBuilderContract<Result extends any> extends Promise<Result> {
         debug(debug: boolean): this;
         timeout(time: number, options?: {
             cancel: boolean;
@@ -645,6 +637,6 @@ declare module '@ioc:Adonis/Lucid/Database' {
         reporterData(data: any): this;
         toQuery(): string;
         exec(): Promise<Result>;
-        toSQL(): Knex.Sql;
+        toSQL(): knex.Sql;
     }
 }

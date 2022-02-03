@@ -1,8 +1,7 @@
-/// <reference path="../../../../adonis-typings/model.d.ts" />
-/// <reference path="../../../../adonis-typings/orm.d.ts" />
 /// <reference path="../../../../adonis-typings/relations.d.ts" />
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model';
 import { QueryClientContract } from '@ioc:Adonis/Lucid/Database';
-import { LucidRow, LucidModel, ManyToManyRelationOptions, ManyToManyRelationContract, ManyToMany as ModelManyToMany } from '@ioc:Adonis/Lucid/Orm';
+import { ManyToManyRelationOptions, ManyToManyRelationContract, ManyToMany as ModelManyToMany } from '@ioc:Adonis/Lucid/Relations';
 /**
  * Manages loading and persisting many to many relationship
  */
@@ -13,7 +12,7 @@ export declare class ManyToMany implements ManyToManyRelationContract<LucidModel
     model: LucidModel;
     type: "manyToMany";
     booted: boolean;
-    serializeAs: string | null;
+    serializeAs: string;
     /**
      * Available after boot is invoked
      */
@@ -24,36 +23,16 @@ export declare class ManyToMany implements ManyToManyRelationContract<LucidModel
     pivotForeignKey: string;
     pivotRelatedForeignKey: string;
     pivotTable: string;
-    pivotColumns: string[];
-    pivotCreatedAtTimestamp: string | undefined;
-    pivotUpdatedAtTimestamp: string | undefined;
-    /**
-     * Timestamp columns for the pivot table
-     */
-    get pivotTimestamps(): string[];
+    extrasPivotColumns: string[];
     /**
      * Reference to the onQuery hook defined by the user
      */
-    onQueryHook: ((query: import("@ioc:Adonis/Lucid/Orm").ManyToManyQueryBuilderContract<LucidModel, any> | import("@ioc:Adonis/Lucid/Orm").ManyToManySubQueryBuilderContract<LucidModel>) => void) | undefined;
-    /**
-     * Computes the created at timestamps column name
-     * for the pivot table
-     */
-    private computedCreatedAtTimestamp;
-    /**
-     * Computes the updated at timestamps column name
-     * for the pivot table
-     */
-    private computedUpdatedAtTimestamp;
+    onQueryHook: ((query: import("@ioc:Adonis/Lucid/Relations").ManyToManyQueryBuilderContract<LucidModel, any> | import("@ioc:Adonis/Lucid/Relations").ManyToManySubQueryBuilderContract<LucidModel>) => void) | undefined;
     constructor(relationName: string, relatedModel: () => LucidModel, options: ManyToManyRelationOptions<ModelManyToMany<LucidModel>>, model: LucidModel);
     /**
      * Returns the alias for the pivot key
      */
     pivotAlias(key: string): string;
-    /**
-     * Clone relationship instance
-     */
-    clone(parent: LucidModel): any;
     /**
      * Boot the relationship and ensure that all keys are in
      * place for queries to do their job.

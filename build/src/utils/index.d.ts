@@ -1,6 +1,7 @@
 /// <reference path="../../adonis-typings/index.d.ts" />
-import { LucidRow, ModelObject, CherryPickFields, RelationshipsContract } from '@ioc:Adonis/Lucid/Orm';
-import { FileNode, QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
+import { RelationshipsContract } from '@ioc:Adonis/Lucid/Relations';
+import { LucidRow, ModelObject, CherryPickFields } from '@ioc:Adonis/Lucid/Model';
+import { QueryClientContract, TransactionClientContract, FileNode } from '@ioc:Adonis/Lucid/Database';
 /**
  * Ensure that relation is defined
  */

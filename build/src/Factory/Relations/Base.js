@@ -14,18 +14,7 @@ exports.BaseRelation = void 0;
  */
 class BaseRelation {
     constructor(factory) {
-        Object.defineProperty(this, "factory", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: factory
-        });
-        Object.defineProperty(this, "ctx", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
+        this.factory = factory;
     }
     /**
      * Instantiates the relationship factory

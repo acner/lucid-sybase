@@ -1,4 +1,4 @@
-import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Orm';
+import { LucidModel, LucidRow } from '@ioc:Adonis/Lucid/Model';
 import { FactoryManagerContract, DefineCallback, StubIdCallback } from '@ioc:Adonis/Lucid/Factory';
 import { FactoryModel } from './FactoryModel';
 /**

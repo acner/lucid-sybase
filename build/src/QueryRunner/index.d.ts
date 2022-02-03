@@ -1,4 +1,4 @@
-import { Knex } from 'knex';
+import knex from 'knex';
 import { QueryClientContract, TransactionClientContract } from '@ioc:Adonis/Lucid/Database';
 /**
  * Query runner exposes the API for executing knex query builder by using the
@@ -45,5 +45,5 @@ export declare class QueryRunner {
     /**
      * Run query by managing its life-cycle
      */
-    run(query: Knex.QueryBuilder | Knex.Raw): Promise<any>;
+    run(query: knex.QueryBuilder | knex.Raw): Promise<any>;
 }
