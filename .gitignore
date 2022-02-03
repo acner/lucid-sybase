@@ -12,7 +12,7 @@ test/functional/database
 *.sublime-project
 *.sublime-workspace
 *.log
-build
+#build
 dist
 yarn.lock
 package-lock.json
