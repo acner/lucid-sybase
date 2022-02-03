@@ -29,7 +29,7 @@
     "copyfiles": "copyfiles \"templates/**/*.txt\" \"instructions.md\" build",
     "build": "npm run compile",
     "commit": "git-cz",
-    "release": "np",
+    "release": "np --branch develop",
     "version": "npm run build",
     "sync-labels": "github-label-sync --labels ./node_modules/@adonisjs/mrm-preset/gh-labels.json adonisjs/lucid",
     "format": "prettier --write ."
